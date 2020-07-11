@@ -13,6 +13,7 @@ function [tp, tp_bus] = turbine_params_5MW()
     tp.rho = 1.225;
 
     load("cp_surface.mat");
+    pitch_cmds = pitch_cmds * pi/180; % stored as degrees
     tp.C_p = Cp;
     [tp.theta_grid, tp.lambda_grid] = meshgrid(pitch_cmds, lambda_cmds);
     tp.theta_bp = pitch_cmds;
