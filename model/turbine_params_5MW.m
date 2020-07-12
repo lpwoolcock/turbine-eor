@@ -1,7 +1,11 @@
 function [tp, tp_bus] = turbine_params_5MW()
     tp.R = 63;
-
     tp.g = 97;
+    
+    tp.P_rated = 5e6;
+    tp.Omega_r_rated = 12.1*pi/30;
+    tp.M_g_rated = tp.P_rated/tp.Omega_r_rated;
+
     tp.K_d = 867e6;
     tp.C_d = 6.2e6;
     tp.J_r = 11.77e6;
@@ -12,8 +16,7 @@ function [tp, tp_bus] = turbine_params_5MW()
 
     tp.rho = 1.225;
 
-    load("cp_surface.mat");
-    pitch_cmds = pitch_cmds * pi/180; % stored as degrees
+    load("cp_surface_5mw.mat");
     tp.C_p = Cp;
     [tp.theta_grid, tp.lambda_grid] = meshgrid(pitch_cmds, lambda_cmds);
     tp.theta_bp = pitch_cmds;

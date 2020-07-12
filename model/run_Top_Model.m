@@ -9,6 +9,7 @@ clear;
  
 generator_params;
 [tp, tp_bus] = turbine_params_5MW();
+DT = 0.00625;
 
 % baseline control region 2
 K_T = 0.5*pi*tp.rho*tp.R^5*tp.C_p_star/(tp.lambda_star^3);
