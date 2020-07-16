@@ -2,10 +2,6 @@ function [tp, tp_bus] = turbine_params_5MW()
     tp.R = 63;
     tp.g = 97;
     
-    tp.P_rated = 5e6;
-    tp.Omega_r_rated = 12.1*pi/30;
-    tp.M_g_rated = tp.P_rated/tp.Omega_r_rated;
-
     tp.K_d = 867e6;
     tp.C_d = 6.2e6;
     tp.J_r = 11.77e6;
@@ -30,5 +26,12 @@ function [tp, tp_bus] = turbine_params_5MW()
     [tp.lambda_star, minus_C_p_star] = fminunc(C_p_lambda,lambda0);
     tp.C_p_star = -minus_C_p_star;
     
+    % rated v_x, Omega_r don't line up with nominal values, calculate
+    % directly from c_p curve and rated power
+    tp.P_rated = 5e6;
+    tp.v_x_rated = (2*tp.P_rated/(tp.rho*pi*tp.R^2*tp.C_p_star))^(1/3);
+    tp.Omega_r_rated = tp.lambda_star*tp.v_x_rated/tp.R;
+    tp.M_g_rated = tp.P_rated/tp.Omega_r_rated;
+
     tp_bus = Simulink.Bus.createObject(tp);
 end
