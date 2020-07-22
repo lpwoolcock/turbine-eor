@@ -1,4 +1,4 @@
-function [x_star, u_star, A, B, H] = eq_region2(tp, vx0)
+function [x_star, u_star, A, B, C, H, K] = eq_region2(tp, vx0, T)
     Omega_r_star = tp.lambda_star * vx0 / tp.R;
     Ma_star = 0.5 * tp.rho * pi * tp.R^3 ...
               * tp.C_p_star / tp.lambda_star ...
@@ -21,14 +21,23 @@ function [x_star, u_star, A, B, H] = eq_region2(tp, vx0)
         - M_a(Omega_r_star, vx0, 0)) / d_Omega_r;
     
 
-    A = [(gamma-tp.C_d)/tp.J_r -1/tp.J_r  tp.C_d/tp.J_r;
+    A_c = [(gamma-tp.C_d)/tp.J_r -1/tp.J_r  tp.C_d/tp.J_r;
          tp.K_d                 0        -tp.K_d      ;
          tp.C_d/tp.J_g          1/tp.J_g -tp.C_d/tp.J_g];
 
-    B = [0;
+    B_c = [0;
          0;
          -1/tp.J_g];
-    H = [alpha/tp.J_r;
+    H_c = [alpha/tp.J_r;
          0;
          0];
+     
+    A = expm(A_c*T);
+    B = A_c\(A-eye(size(A)))*B_c;
+    C = [1 0 0];
+    H = A_c\(A-eye(size(A)))*H_c;
+    
+    % needs to be using discretised versions
+    coder.extrinsic('lqr');
+    [K,~,~] = lqr(A_c,B_c,C.'*C,1e-14);
 end

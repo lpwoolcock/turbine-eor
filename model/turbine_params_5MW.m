@@ -1,4 +1,4 @@
-function [tp, tp_bus] = turbine_params_5MW()
+function [tp] = turbine_params_5MW()
     tp.R = 63;
     tp.g = 97;
     
@@ -32,6 +32,22 @@ function [tp, tp_bus] = turbine_params_5MW()
     tp.v_x_rated = (2*tp.P_rated/(tp.rho*pi*tp.R^2*tp.C_p_star))^(1/3);
     tp.Omega_r_rated = tp.lambda_star*tp.v_x_rated/tp.R;
     tp.M_g_rated = tp.P_rated/tp.Omega_r_rated;
+    
+    % need to generate theta_star curve for region 3
+    lambda = @(vx) tp.Omega_r_rated * tp.R / vx;
+    f = @(vx, theta) 0.5 * tp.rho * pi * tp.R^3 * vx^2 ...
+        * interp2(tp.theta_grid, tp.lambda_grid, tp.C_p, theta, lambda(vx), 'spline') ...
+        / lambda(vx) - tp.M_g_rated;
 
-    tp_bus = Simulink.Bus.createObject(tp);
+    tp.v_x_bp = 0:0.1:25;
+    for k=1:length(tp.v_x_bp)
+        if tp.v_x_bp(k) < tp.v_x_rated
+            tp.theta_v_x = 0;
+        else
+            g = @(theta) f(tp.v_x_bp(k),theta);
+            tp.theta_v_x(k) = fzero(g, [-0.001 tp.theta_bp(end)]);
+        end
+    end
+
+    Simulink.Bus.createObject(tp);
 end

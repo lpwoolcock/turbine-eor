@@ -1,4 +1,4 @@
-function [x_star, u_star, A, B, H] = eq_region3(tp, vx0)
+function [x_star, u_star, A, B, C, H, K] = eq_region3(tp, vx0, T)
     Omega_r_star = tp.Omega_r_rated;
     Ma_star = tp.M_g_rated;
     
@@ -31,20 +31,29 @@ function [x_star, u_star, A, B, H] = eq_region3(tp, vx0)
         - M_a(Omega_r_star, vx0, theta_star)) / d_Omega_r;
     
 
-    A = [(gamma-tp.C_d)/tp.J_r -1/tp.J_r  tp.C_d/tp.J_r beta/tp.J_r 0;
+    A_c = [(gamma-tp.C_d)/tp.J_r -1/tp.J_r  tp.C_d/tp.J_r beta/tp.J_r 0;
          tp.K_d                 0        -tp.K_d        0           0;
          tp.C_d/tp.J_g          1/tp.J_g -tp.C_d/tp.J_g 0           0;
          0                      0         0             0           1;
          0                      0         0            -tp.omega^2 -2*tp.zeta*tp.omega];
-    B = [0;
+    B_c = [0;
          0; 
          0;
          0;
          tp.omega^2];
-    H = [alpha/tp.J_r;
+    H_c = [alpha/tp.J_r;
          0;
          0;
          0;
          0];
+     
+    A = expm(A_c*T);
+    B = A_c\(A-eye(size(A)))*B_c;
+    C = [0 0 0 1 0];
+    H = A_c\(A-eye(size(A)))*H_c;
+    
+    % needs to be using discretized versions
+    coder.extrinsic('lqr');
+    [K,~,~] = lqr(A_c,B_c,C.'*C,1e-1);
 end
 
