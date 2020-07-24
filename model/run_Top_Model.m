@@ -10,11 +10,12 @@ clear;
 generator_params;
 tp = turbine_params_5MW();
 DT = 0.00625;
-T_cal = 60;
+T_cal = 6000;
 T_s = 0.1; % note this is 16*DT
 
 % baseline control region 2
-K_T = 0.5*pi*tp.rho*tp.R^5*tp.C_p_star/(tp.lambda_star^3);
+% units of MNm/(rads^-1)^2
+K_T = 0.5e-6*pi*tp.rho*tp.R^5*tp.C_p_star/(tp.lambda_star^3);
 
 % no. of samples in wind exosystem
 N_w = 3;
@@ -29,7 +30,7 @@ K_d = 867e6;
 C_d = 6.2e6;
 
 % parameters required for the S-Function block:
-FAST_InputFileName = 'NREL_Baseline.fst';
+FAST_InputFileName = 'NREL_Baseline_lowdof.fst';
 TMax = 600;
 
 % Initial conditions
