@@ -10,7 +10,7 @@ clear;
 generator_params;
 tp = turbine_params_5MW();
 DT = 0.00625;
-T_cal = 6000;
+T_cal = 60;
 T_s = 0.1; % note this is 16*DT
 
 % baseline control region 2
