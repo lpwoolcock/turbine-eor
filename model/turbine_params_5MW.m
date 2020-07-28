@@ -31,7 +31,8 @@ function [tp] = turbine_params_5MW()
     tp.P_rated = 5e6;
     tp.v_x_rated = (2*tp.P_rated/(tp.rho*pi*tp.R^2*tp.C_p_star))^(1/3);
     tp.Omega_r_rated = tp.lambda_star*tp.v_x_rated/tp.R;
-    tp.M_g_rated = tp.P_rated/tp.Omega_r_rated;
+    % in MNm
+    tp.M_g_rated = 1e-6*tp.P_rated/tp.Omega_r_rated;
     
     % need to generate theta_star curve for region 3
     lambda = @(vx) tp.Omega_r_rated * tp.R / vx;
