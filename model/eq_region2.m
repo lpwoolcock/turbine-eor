@@ -41,5 +41,5 @@ function [x_star, u_star, A, B, C, H, K] = eq_region2(tp, vx0, T)
     
     % needs to be using discretised versions
     coder.extrinsic('lqr');
-    [K,~,~] = lqr(A_c,B_c,C.'*C,1e-2);
+    [K,~,~] = lqr(A_c,B_c,C.'*C,1e-3);
 end
