@@ -10,7 +10,8 @@ clear;
 generator_params;
 tp = turbine_params_5MW();
 DT = 0.00625;
-T_cal = 60;
+T_cal = 60; % Time to calculate mean windspeed
+T_model = 10; % Time given for wind model to be developed
 T_s = 0.1; % note this is 16*DT
 
 % baseline control region 2
