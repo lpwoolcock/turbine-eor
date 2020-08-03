@@ -16,6 +16,8 @@ clear;
 %model\5MW_Baseline\Wind\turbsim\unsteady_10min_multi.inp
 %If you make a change make sure to also clear the catch at 
 %model\5MW_Baseline\Wind of files unsteady_10min_*.bts
+%to itterate over different properties update 
+%line_in_file in generate_wind_file(mean_wind_speed) function.
 
 mean_wind_speeds = [2 4 6 8]; %change this to change wind speeds simulated over; ints only sorry
 num_loads = 5;                %MyT MxT MyB MxB LSS
@@ -191,7 +193,7 @@ Del_eq=zeros(1,num_loads);
 if(size(mean_wind_speeds,2)>1)
     wind_speed_diff = abs(mean_wind_speeds(2)-mean_wind_speeds(1));
 else
-    wind_speed_diff = 2; %defalt value
+    wind_speed_diff = 2; %default value
 end
 
 for i=1:size(mean_wind_speeds,2)
@@ -267,7 +269,7 @@ end
 function generate_wind_file(mean_wind_speed)
     
     %update input file
-    line_in_file = 36;
+    line_in_file = 36; % change this to itterate over other properties, NOTE:line indexes start at 0.
     cmd = sprintf('cd ./5MW_Baseline/Wind/turbsim & replace_number_on_line.exe %d %d unsteady_10min_multi.inp',line_in_file,mean_wind_speed);
     system(cmd)
     
