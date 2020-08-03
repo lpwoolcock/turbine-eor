@@ -6,20 +6,28 @@
 % addpath([ FASTv8_root_directory '\bin']);
 
 
-%to change wind properties
-%model\5MW_Baseline\Wind\turbsim\unsteady_10min_multi.inp
-
-
 clear;
 
-mean_wind_speeds = [2 4 6 8]; %change this to change wind speeds ints only sorry
+%% wind speeds input
+%This script allows for the batch simulation over a range of wind speeds
+%it generates apropriate wind files, using turbsim automatically,
+%and catchs them to speed up subsequent runs.
+%to change wind properties except mean speed update:
+%model\5MW_Baseline\Wind\turbsim\unsteady_10min_multi.inp
+%If you make a change make sure to also clear the catch at 
+%model\5MW_Baseline\Wind of files unsteady_10min_*.bts
+
+mean_wind_speeds = [2 4 6 8]; %change this to change wind speeds simulated over; ints only sorry
 num_loads = 5;                %MyT MxT MyB MxB LSS
 
+%% Initialize System
+ 
 generator_params;
 tp = turbine_params_5MW();
 DT = 0.00625;
-T_cal = 60;
-T_s = 0.1; % note this is 16*DT
+T_mean = 60;         % Time to calculate mean windspeed
+T_cal = T_mean + 10; % Total calibration time (i.e additional time required for parameter estimation)
+T_s = 0.1;           % note this is 16*DT
 
 % baseline control region 2
 % units of MNm/(rads^-1)^2
@@ -38,7 +46,7 @@ K_d = 867e6;
 C_d = 6.2e6;
 
 % parameters required for the S-Function block:
-FAST_InputFileName = 'NREL_Baseline_multi.fst';
+FAST_InputFileName = 'NREL_Baseline.fst';
 TMax = 600;
 
 % Initial conditions
@@ -170,38 +178,43 @@ loads = zeros(size(mean_wind_speeds,2),num_loads);
 for i=1:size(mean_wind_speeds,2)
     
     run_sim(mean_wind_speeds(1,i),TMax);
-    %avg = get_weighted_load();
-    %loads(i+1,:) = avg';
+    avg = get_weighted_load(OutList);
+    loads(i,:) = avg';
 end
 
 
-% %save the output
-% writematrix(loads,'DELs.csv');
-% %weighted loads
-% Del_eq=zeros(1,num_loads);
-% wind_speed_diff = abs(mean_wind_speeds(2)-mean_wind_speeds(1));
-% 
-% for i=1:size(windfile_names,1)
-%     Del_eq = Del_eq + weight_by_windspeed(mean_wind_speeds(i),wind_speed_diff,loads(i,:));
-%     
-% end
-%     Del_eq = Del_eq/size(mean_wind_Speed,1)
+%save the output
+writematrix(loads,'DELs.csv');
 
-%% Load Analysis
+%% weighted by wind freq DELs 
+Del_eq=zeros(1,num_loads);
+if(size(mean_wind_speeds,2)>1)
+    wind_speed_diff = abs(mean_wind_speeds(2)-mean_wind_speeds(1));
+else
+    wind_speed_diff = 2; %defalt value
+end
+
+for i=1:size(mean_wind_speeds,2)
+    Del_eq = Del_eq + weight_by_windspeed(mean_wind_speeds(1,i),wind_speed_diff,loads(i,:));
+    
+end
+    Del_eq = Del_eq/size(mean_wind_speeds,2)
 
 %calculates the dels for the last simulation run
-function avg = get_weighted_load()
+function avg = get_weighted_load(OutList)
 
     %load the data
+    
+    Data = importdata('NREL_Baseline_multi.SFunc.out','\t',8).data;
 
-    T = OutData(:,find(contains(OutList,'Time'))); %#ok<*FNDSB,*USENS>
-    MyT = OutData(:,find(contains(OutList,'TwrBsMyt')));
-    MxT = OutData(:,find(contains(OutList,'TwrBsMxt')));
-    MyB = OutData(:,find(contains(OutList,'RootMyb1')));
-    MxB = OutData(:,find(contains(OutList,'RootMxb1')));
-    LSS = OutData(:,find(contains(OutList,'RotTorq')));
+    T = Data(:,find(contains(OutList,'Time'))); %#ok<*FNDSB,*USENS>
+    MyT = Data(:,find(contains(OutList,'TwrBsMyt')));
+    MxT = Data(:,find(contains(OutList,'TwrBsMxt')));
+    MyB = Data(:,find(contains(OutList,'RootMyb1')));
+    MxB = Data(:,find(contains(OutList,'RootMxb1')));
+    LSS = Data(:,find(contains(OutList,'RotTorq')));
 
-    moments = [MyT MxT MyB MxB LSS];
+    moments = [MyT MxT MyB MxB LSS];   
     wohler = [4 4 10 10 4];             %weights to calculate the DELs
 
     size(moments,2);
@@ -250,10 +263,10 @@ sum = 0;
 end
 
 
-%generate a bts wind file with turbsim ouput in the 5MW_Baseline/Wind directory
+%generate a .bts wind file with turbsim ouput in the 5MW_Baseline/Wind directory
 function generate_wind_file(mean_wind_speed)
-    %update input file
     
+    %update input file
     line_in_file = 36;
     cmd = sprintf('cd ./5MW_Baseline/Wind/turbsim & replace_number_on_line.exe %d %d unsteady_10min_multi.inp',line_in_file,mean_wind_speed);
     system(cmd)
@@ -271,8 +284,7 @@ end
 %run a simulation for the given mean_wind_speed
 function run_sim(mean_wind_speed,TMax)
 
-%update the input file
-
+    %update the input file
     new_name = sprintf('Wind/unsteady_10min_%d.bts',mean_wind_speed);
     cmd = sprintf('replace_string.exe windfile_placeholder %s ./5MW_Baseline/NRELOffshrBsline5MW_InflowWind_unsteady_multi.dat',new_name);
     system(cmd)
@@ -283,6 +295,8 @@ function run_sim(mean_wind_speed,TMax)
     
     %run simulation
     sim('Top_Model',[0,TMax]);
+    
+    %tidy up
     cmd = sprintf('replace_string.exe %s  windfile_placeholder ./5MW_Baseline/NRELOffshrBsline5MW_InflowWind_unsteady_multi.dat',new_name);
     system(cmd)
 end
