@@ -1,0 +1,10 @@
+/*This is a list of the variables saved in the simulink_outfile_winspeed_*.mat files
+1,U_inf 
+2,U_inf_hat
+3,M_a
+4,M_g
+5,phi_hat
+6,Lambda
+7,Lambda_star
+8,theta 
+9,theta_c
