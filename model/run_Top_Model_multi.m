@@ -48,7 +48,7 @@ K_d = 867e6;
 C_d = 6.2e6;
 
 % parameters required for the S-Function block:
-FAST_InputFileName = 'NREL_Baseline.fst';
+FAST_InputFileName = 'NREL_Baseline_multi.fst';
 TMax = 600;
 
 % Initial conditions
