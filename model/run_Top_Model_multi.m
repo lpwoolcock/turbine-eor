@@ -19,7 +19,7 @@ clear;
 %to itterate over different properties update 
 %line_in_file in generate_wind_file(mean_wind_speed) function.
 
-mean_wind_speeds = [2 4 6 8]; %change this to change wind speeds simulated over; ints only sorry
+mean_wind_speeds = [2]; %change this to change wind speeds simulated over; ints only sorry
 num_loads = 5;                %MyT MxT MyB MxB LSS
 
 %% Initialize System
@@ -48,7 +48,7 @@ K_d = 867e6;
 C_d = 6.2e6;
 
 % parameters required for the S-Function block:
-FAST_InputFileName = 'NREL_Baseline.fst';
+FAST_InputFileName = 'NREL_Baseline_multi.fst';
 TMax = 600;
 
 % Initial conditions
