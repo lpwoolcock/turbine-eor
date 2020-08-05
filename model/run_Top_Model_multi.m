@@ -19,7 +19,7 @@ clear;
 %to itterate over different properties update 
 %line_in_file in generate_wind_file(mean_wind_speed) function.
 
-mean_wind_speeds = [2]; %change this to change wind speeds simulated over; ints only sorry
+mean_wind_speeds = [2 4 6 8]; %change this to change wind speeds simulated over; ints only sorry
 num_loads = 5;                %MyT MxT MyB MxB LSS
 
 %% Initialize System
@@ -180,6 +180,7 @@ loads = zeros(size(mean_wind_speeds,2),num_loads);
 for i=1:size(mean_wind_speeds,2)
     
     run_sim(mean_wind_speeds(1,i),TMax);
+    data_logged = movefile('./simulink_outfile.mat',sprintf('./Logged_OutData/simulink_outfile_%d.mat',mean_wind_speeds(i)))
     avg = get_weighted_load(OutList);
     loads(i,:) = avg';
 end
@@ -278,7 +279,7 @@ function generate_wind_file(mean_wind_speed)
     system('cd ./5MW_Baseline/Wind/turbsim & turbsim.exe unsteady_10min_multi.inp')
 
     %move and rename file
-    new_path = sprintf('./5MW_Baseline/Wind/unsteady_10min_%d.bts',mean_wind_speed);
+    new_path = sprintf('./5MW_Baseline/Wind/multi_wind/unsteady_10min_%d.bts',mean_wind_speed);
     movefile('./5MW_Baseline/Wind/turbsim/unsteady_10min_multi.bts',new_path);
 
 end
@@ -287,7 +288,7 @@ end
 function run_sim(mean_wind_speed,TMax)
 
     %update the input file
-    new_name = sprintf('Wind/unsteady_10min_%d.bts',mean_wind_speed);
+    new_name = sprintf('Wind/multi_wind/unsteady_10min_%d.bts',mean_wind_speed);
     cmd = sprintf('replace_string.exe windfile_placeholder %s ./5MW_Baseline/NRELOffshrBsline5MW_InflowWind_unsteady_multi.dat',new_name);
     system(cmd)
     new_path = sprintf('./5MW_Baseline/%s',new_name);

@@ -35,7 +35,7 @@ default             ETMc            - IEC Extreme Turbulence Model "c" parameter
 default             WindProfileType - Wind profile type ("JET";"LOG"=logarithmic;"PL"=power law;"H2L"=Log law for TIDAL spectral model;"IEC"=PL on rotor disk, LOG elsewhere; or "default")
 90.0                RefHt           - Height of the reference wind speed [m]
 8.00                   URef            - Mean (total) wind speed at the reference height [m/s] (or "default" for JET wind profile)
-wéê¹âwÿ9íw³Œû6w^E—)w7;67wòtwdefault             ZJetMax         - Jet height [m] (used only for JET wind profile, valid 70-490 m)
+vÒœxâvµ`o¼vSï(v¯ô”v^çwéê¹âwÿ9íw³Œû6w^E—)w7;67wòtwdefault             ZJetMax         - Jet height [m] (used only for JET wind profile, valid 70-490 m)
 default             PLExp           - Power law exponent [-] (or "default")           
 default             Z0              - Surface roughness length [m] (or "default")
 
