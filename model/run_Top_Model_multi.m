@@ -109,8 +109,8 @@ end
  %Power = get_power(OutList,outfile_paths,mean_wind_speeds);
  %writematrix(Power,'./Logged_Outdata/Power.csv')
  
- %delete NREL_input_tmp_*;
- %delete 5MW_Baseline/NREL_inflowWind_tmp_*;
+ delete NREL_input_tmp_*;
+ delete 5MW_Baseline/NREL_inflowWind_tmp_*;
  
 
 %% plot output
