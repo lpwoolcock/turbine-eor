@@ -74,12 +74,13 @@ alpha = 0.000015;
 V = alpha*eye(2);
 
 % Model uncertainty - Don't tune unless necessary
-G = [1; 0; 1; 3];
-W = 1;
+G = diag(1.4, 0, 1.4, 4.5);
+W = eye(4);
 
 [KEST, L_kalman, P] = kalman(ss(A_aug, [B_aug G], C_aug, 0), W, V);
 
 ini_torque = 0; %used in state estimator
+
 
 %% PI Kalman Filter
 % scale factor to handle numerical issues
