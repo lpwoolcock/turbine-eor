@@ -14,14 +14,15 @@ clear;
 %and caches them to speed up subsequent runs.
 %to change wind properties except mean speed update:
 %model\5MW_Baseline\Wind\turbsim\unsteady_10min_multi.inp
-%If you make a change make sure to also clear the catch at 
-%model\5MW_Baseline\Wind\multi_wind of files unsteady_10min_*.bts
+%If you make a change make sure to also clear the cache at 
+%model\5MW_Baseline\Wind\multi_wind of files unsteady_tmp_*.bts
 %to itterate over different properties update 
 %line_in_file in generate_wind_file(mean_wind_speed) function.
 
 mean_wind_speeds = [8 10 12 14 16]; %change this to change wind speeds simulated over; ints only sorry
-num_loads = 5;                %MyT MxT MyB MxB LSS
-
+num_loads = 5;                 %MyT MxT MyB MxB LSS
+sim_time = 600;               %set the simulation time, if you change this set clear cache to true for first run
+clear_cache = true;            %flag to clear the wind file cache
 %% Toggle flags to turn on and off which data is plotted
 
 plotting = true;    %toggle to turn on\off data plotting
@@ -46,17 +47,22 @@ del_names = {'MyT', 'MxT', 'MyB', 'MxB', 'LSS'};
 loads = zeros(size(mean_wind_speeds,2),num_loads);
 
 %% generate input files
+
+if(clear_cache)
+     delete 5MW_Baseline/Wind/multi_wind/unsteady_tmp_*;
+end
+
 for i=1:size(mean_wind_speeds,2)
     
    tmp_iw_name = sprintf('5MW_Baseline/NREL_inflowWind_tmp_%d.dat',mean_wind_speeds(i));
    copyfile('./5MW_Baseline/NRELOffshrBsline5MW_InflowWind_unsteady_multi.dat',sprintf('./%s',tmp_iw_name));
-   new_windfile_name = sprintf('Wind/multi_wind/unsteady_10min_%d.bts',mean_wind_speeds(i));
+   new_windfile_name = sprintf('Wind/multi_wind/unsteady_tmp_%d.bts',mean_wind_speeds(i));
    cmd = sprintf('replace_string.exe windfile_placeholder  %s %s',new_windfile_name,tmp_iw_name);
    
    system(cmd)
    
    if(~isfile(sprintf('./5MW_Baseline/%s',new_windfile_name)))
-        generated_windfile_ok = generate_wind_file(mean_wind_speeds(i))
+       generate_wind_file(mean_wind_speeds(i),sim_time)
    end
    
    
@@ -70,6 +76,9 @@ end
 %% set up model input
 
 model = 'Top_Model';
+load_system(model)
+set_param(model, 'StopTime', num2str(sim_time));
+save_system Top_Model Top_Model.slx
 load_system(model)
 
 simIn(1:size(mean_wind_speeds,2)) = Simulink.SimulationInput(model);
@@ -85,7 +94,7 @@ end
 %% run the model
 
 parsim(simIn);
-
+%%
 for i=1:size(mean_wind_speeds,2)
     movefile(sprintf('simulink_outfile_%d.mat',i),sprintf('./Logged_Outdata/outfile_for_%d_wind.mat',mean_wind_speeds(1,i)));
 end
@@ -109,6 +118,7 @@ end
  %Power = get_power(OutList,outfile_paths,mean_wind_speeds);
  %writematrix(Power,'./Logged_Outdata/Power.csv')
  
+ %clean up
  delete NREL_input_tmp_*;
  delete 5MW_Baseline/NREL_inflowWind_tmp_*;
  
@@ -200,25 +210,30 @@ sum = 0;
     for i=1:size(c,1)
         sum = sum + (c(i,1)*c(i,2)^m);
     end
-    sum = 6.307*10^8*sum^(1/m)/(t);
+    sum = sum^(1/m)/(t);
 
 end
 
 
 %generate a .bts wind file with turbsim ouput in the 5MW_Baseline/Wind/multi_wind directory
-function generate_wind_file(mean_wind_speed)
+function generate_wind_file(mean_wind_speed,sim_time)
     
     %update input file
     line_in_file = 36; % change this to itterate over other properties, NOTE:line indexes start at 0.
     tmp_name = sprintf('unsteady_tmp_%d',mean_wind_speed);
     tmp_path = sprintf('./5MW_Baseline/Wind/turbsim/%s',tmp_name);
     copyfile('./5MW_Baseline/Wind/turbsim/unsteady_10min_multi.inp',sprintf('%s.inp',tmp_path));
-    cmd = sprintf('cd ./5MW_Baseline/Wind/turbsim & replace_number_on_line.exe %d %d %s.inp',line_in_file,mean_wind_speed,tmp_path);
+    cmd = sprintf('cd ./5MW_Baseline/Wind/turbsim & replace_number_on_line.exe %d %d %s.inp',line_in_file,mean_wind_speed,tmp_name);
     system(cmd)
     
+    %update sim time magic numbers I know but feeling lazy
+    cmd = sprintf('cd ./5MW_Baseline/Wind/turbsim & replace_number_on_line.exe %d %d %s.inp',20,sim_time,tmp_name);
+    system(cmd)
+    cmd = sprintf('cd ./5MW_Baseline/Wind/turbsim & replace_number_on_line.exe %d %d %s.inp',21,sim_time,tmp_name);
+    system(cmd)
     %runturbsim
     
-    cmd = system('cd ./5MW_Baseline/Wind/turbsim & turbsim.exe %s.inp',tmp_name);
+    cmd = sprintf('cd ./5MW_Baseline/Wind/turbsim & turbsim.exe %s.inp',tmp_name);
     system(cmd)
     
     new_path = sprintf('./5MW_Baseline/Wind/multi_wind/%s.bts',tmp_name);
@@ -241,8 +256,8 @@ function P = get_power(OutList,outfile_paths,mean_wind_speeds)
         Tq = Data(:,find(contains(OutList,'GenTq')));
         omega_g = Data(:,find(contains(OutList,'GenSpeed')));
         P = zeros(size(T,1),1);
-        for i=1:size(T)
-           P(:,i+1) = Tq.*omega_g*2*pi/60; %for some reason FAST outputs rpm 
+        for j=1:size(T)
+           P(:,j+1) = Tq.*omega_g*2*pi/60; %for some reason FAST outputs rpm 
         end
     end
     

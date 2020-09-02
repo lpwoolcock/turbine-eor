@@ -78,7 +78,6 @@ int replace_number_on_line(int line_number,double new_number,char* file_path){
 		ind_new_line++;
 		index++;
 	}
-	new_line[ind_new_line++] = '\n';
 	new_line[ind_new_line++] = '\0';
 	
 	if((fp = fopen(file_path,"r"))==NULL){
