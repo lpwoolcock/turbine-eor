@@ -1,8 +1,9 @@
 names = importdata('simulink_outfile_list.csv');
 names = names(2:end);
+dels = importdata('DELs.csv')
 
-windspeeds = [2 4 6 8];
-
+windspeeds = [2 4];
+load_names = {'MyT','MxT','MyB','MxB','LSS'};
 
  
  for j = 1:size(windspeeds,2)
@@ -21,4 +22,15 @@ windspeeds = [2 4 6 8];
      
      
  end
+ 
+ for i = 1:size(windspeeds,2)
+    figure()
+    bar(windspeeds,dels(:,i)) 
+    title(sprintf('DELs for %s',char(load_names(i))))
+    xlabel windspeeds
+    ylabel DEL
+     
+ end
+     
+     
  

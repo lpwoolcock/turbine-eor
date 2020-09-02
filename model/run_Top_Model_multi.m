@@ -15,179 +15,116 @@ clear;
 %to change wind properties except mean speed update:
 %model\5MW_Baseline\Wind\turbsim\unsteady_10min_multi.inp
 %If you make a change make sure to also clear the catch at 
-%model\5MW_Baseline\Wind of files unsteady_10min_*.bts
+%model\5MW_Baseline\Wind\multi_wind of files unsteady_10min_*.bts
 %to itterate over different properties update 
 %line_in_file in generate_wind_file(mean_wind_speed) function.
 
-mean_wind_speeds = [2 4 6 8]; %change this to change wind speeds simulated over; ints only sorry
+mean_wind_speeds = [8 10 12 14 16]; %change this to change wind speeds simulated over; ints only sorry
 num_loads = 5;                %MyT MxT MyB MxB LSS
 
-%% Initialize System
- 
-generator_params;
-tp = turbine_params_5MW();
-DT = 0.00625;
-T_mean = 60;         % Time to calculate mean windspeed
-T_cal = T_mean + 10; % Total calibration time (i.e additional time required for parameter estimation)
-T_s = 0.1;           % note this is 16*DT
+%% Toggle flags to turn on and off which data is plotted
 
-% baseline control region 2
-% units of MNm/(rads^-1)^2
-K_T = 0.5e-6*pi*tp.rho*tp.R^5*tp.C_p_star/(tp.lambda_star^3);
+plotting = true;    %toggle to turn on\off data plotting
 
-% no. of samples in wind exosystem
-N_w = 3;
+%toggle to turn on/off which data is plotted
+U_inf_flag = true;
+U_inf_hat_flag = true;
+M_a_flag = false;
+M_g_flag = false;
+phi_hat_flag = false;
+Lambda_flag = false;
+Lambda_star_flag = false;
+theta_flag = false;
+theta_c_flag = false;
+power_flag = true;
+dels_flag = true;
 
-% system parameters
-R = 63;
-rho = 1.225;
-g = 97;
-J_r = 11.77e6;
-J_g = 534;
-K_d = 867e6;
-C_d = 6.2e6;
+plot_flags = [U_inf_flag; U_inf_hat_flag; M_a_flag; M_g_flag; phi_hat_flag; Lambda_flag; Lambda_star_flag; theta_flag; theta_c_flag;power_flag ;dels_flag];
+outdata_names = {'Uinf', 'UinfHat', 'M_a', 'M_g', 'phiHat', 'Lambda', 'Lambda*', 'theta', 'theta_c','DELs'};
+del_names = {'MyT', 'MxT', 'MyB', 'MxB', 'LSS'};
 
-% parameters required for the S-Function block:
-FAST_InputFileName = 'NREL_Baseline_multi.fst';
-TMax = 600;
-
-% Initial conditions
-Omega_r_0 = 1;
-phi_0 = 0;
-Omega_g_0 = 1;
-
-%% Simple Kalman Filter
-% scale factor to handle numerical issues
-s = 1e6;
-m = 1e3;
-% Augmented Plant Model
-A_aug = [-C_d/J_r -K_d/(m*J_r) C_d/J_r s/J_r; m 0 -m 0; C_d/(g*J_g) K_d/(m*g*J_g) -C_d/(g*J_g) 0; 0 0 0 0];
-B_aug = [0; 0; -s/(g*J_g); 0];
-C_aug = [1 0 0 0; 0 0 1 0];
-D_aug = [0; 0];
-rank(obsv(A_aug,C_aug));
-[ABAR,BBAR,CBAR,T,K] = obsvf(A_aug,B_aug,C_aug);
-
-%% Tuning parameters
-% Measurement uncertainty
-alpha = 0.000015;
-V = alpha*eye(2);
-
-% Model uncertainty - Don't tune unless necessary
-G = [1; 0; 1; 3];
-W = 1;
-
-[KEST, L_kalman, P] = kalman(ss(A_aug, [B_aug G], C_aug, 0), W, V);
-
-ini_torque = 0; %used in state estimator
-
-%% PI Kalman Filter
-% scale factor to handle numerical issues
-s = 1e6;
-m = 1e3;
-% Augmented Plant Model
-A_aug_PI = [-C_d/J_r -K_d/(m*J_r) C_d/J_r s/J_r; m 0 -m 0; C_d/(g*J_g) K_d/(m*g*J_g) -C_d/(g*J_g) 0; 0 0 0 0];
-B_aug_PI = [0; 0; -s/(g*J_g); 0];
-C_aug_PI = [0 0 1 0];
-D_aug_PI = [0];
-
-% Non-augmented Model
-A_PI = [-C_d/J_r -K_d/(m*J_r) C_d/J_r; m 0 -m; C_d/(g*J_g) K_d/(m*g*J_g) -C_d/(g*J_g)];
-B_G_PI = [0; 0; -s/(g*J_g)];
-B_A_PI = [s/J_r; 0; 0];
-C_PI = [0 0 1];
-D_PI = [0];
-
-% Tuning parameters
-% Measurement uncertainty
-alpha = 0.000015; %Same as simple kalman
-
-V = alpha;
-
-% Model uncertainty - Don't tune unless necessary
-G = [1; 0; 1; 3];
-W = 1;
-
-[KEST, L_kalman_PI, P] = kalman(ss(A_aug_PI, [B_aug_PI G], C_aug_PI, 0), W, V);
-
-% PI parameters
-K_i = L_kalman_PI(4);
-K_p = 50;
-
-% Reset kalman gains
-L_kalman_PI = L_kalman_PI(1:3);
-
-ini_torque = 0; %used in state estimator
-
-%% Reduced Order Kalman Filter
-s = 1e6;
-m = 1e3;
-
-A_aa = [-C_d/J_r C_d/J_r; C_d/(g*J_g) -C_d/(g*J_g)];
-A_ab = [-K_d/(m*J_r) s/J_r; K_d/(m*g*J_g) 0];
-A_ba = [m -m; 0 0]; 
-A_bb = [0 0; 0 0];
-B_a = [0; -s/(g*J_g)];
-B_b = [0; 0];
-
-% Measurement uncertainty
-alpha = 0.05;
-V = alpha*eye(2);
-
-% Model uncertainty - Don't tune unless necessary
-G = [5; 4.5];
-W = 1;
-
-[KEST, L_kal_red, P] = kalman(ss(A_bb, [eye(2) G], A_ab, 0), W, V);
-
-ini_torque = 0; %used in state estimator
-
-%% Simple Reduced Order Observer
-
-L_unknown = 10; %s = -10 pole
-
-
-%% Immersion and Invariance 
-% Tuning parameter
-gamma = 500;
-ini_wind_speed = 0;
-
-%% Region 3 Pitch Rate Observer
-omega = 2*pi;
-zeta = 0.70;
-A_pitch = [0 1; omega^2 -2*zeta*omega];
-B_pitch = [0; omega^2];
-C_pitch = [1 0];
-
-% Measurement uncertainty
-alpha = 0.05;
-V = alpha; %tune this
-
-% Model uncertainty - Don't tune unless necessary
-G = [0; 1];
-W = 1;
-
-[KEST, L_kal_pitch, P] = kalman(ss(A_pitch, [B_pitch G], C_pitch, 0), W, V);
-
-ini_pitch = 0; %used in state estimator
-
-
-%% run the model
 loads = zeros(size(mean_wind_speeds,2),num_loads);
 
-%itterate over the wind speeds running the model and generating
-%wind files as necissary
+%% generate input files
 for i=1:size(mean_wind_speeds,2)
     
-    run_sim(mean_wind_speeds(1,i),TMax);
-    data_logged = movefile('./simulink_outfile.mat',sprintf('./Logged_OutData/simulink_outfile_%d.mat',mean_wind_speeds(i)))
-    avg = get_weighted_load(OutList);
-    loads(i,:) = avg';
+   tmp_iw_name = sprintf('5MW_Baseline/NREL_inflowWind_tmp_%d.dat',mean_wind_speeds(i));
+   copyfile('./5MW_Baseline/NRELOffshrBsline5MW_InflowWind_unsteady_multi.dat',sprintf('./%s',tmp_iw_name));
+   new_windfile_name = sprintf('Wind/multi_wind/unsteady_10min_%d.bts',mean_wind_speeds(i));
+   cmd = sprintf('replace_string.exe windfile_placeholder  %s %s',new_windfile_name,tmp_iw_name);
+   
+   system(cmd)
+   
+   if(~isfile(sprintf('./5MW_Baseline/%s',new_windfile_name)))
+        generated_windfile_ok = generate_wind_file(mean_wind_speeds(i))
+   end
+   
+   
+   tmp_inp_name = sprintf('NREL_input_tmp_%d.fst',mean_wind_speeds(i));
+   copyfile('NREL_Baseline_multi.fst',tmp_inp_name);
+   cmd = sprintf('replace_string.exe inflow_placeholder %s %s',tmp_iw_name,tmp_inp_name);
+   system(cmd)
+ 
+end
+
+%% set up model input
+
+model = 'Top_Model';
+load_system(model)
+
+simIn(1:size(mean_wind_speeds,2)) = Simulink.SimulationInput(model);
+
+for i = 1:size(mean_wind_speeds,2)
+    
+   simIn(i) = simIn(i).setVariable('FAST_InputFileName',sprintf('NREL_input_tmp_%d.fst',mean_wind_speeds(1,i))); 
+   
 end
 
 
-%save the output
-writematrix(loads,'DELs.csv');
+ 
+%% run the model
+
+parsim(simIn);
+
+for i=1:size(mean_wind_speeds,2)
+    movefile(sprintf('simulink_outfile_%d.mat',i),sprintf('./Logged_Outdata/outfile_for_%d_wind.mat',mean_wind_speeds(1,i)));
+end
+
+%save and aggregate the data 
+ for i=1:size(mean_wind_speeds,2)
+     
+     outfile_path = sprintf('NREL_input_tmp_%d.SFunc.out',mean_wind_speeds(1,i));
+     avg = get_weighted_load(OutList,outfile_path);
+     loads(i,:) = avg';
+     movefile(outfile_path,sprintf('./Logged_Outdata/%s',outfile_path))
+ end
+ 
+ writematrix(loads,'./Logged_Outdata/DELs.csv');
+ 
+ outfile_paths = cell(size(mean_wind_speeds,2),1);
+ for i = 1:size(mean_wind_speeds,2)
+    outfile_paths(i,1) = cellstr(sprintf('NREL_input_tmp_%d.SFunc.out',mean_wind_speeds(1,i)));
+ end
+ 
+ %Power = get_power(OutList,outfile_paths,mean_wind_speeds);
+ %writematrix(Power,'./Logged_Outdata/Power.csv')
+ 
+ %delete NREL_input_tmp_*;
+ %delete 5MW_Baseline/NREL_inflowWind_tmp_*;
+ 
+
+%% plot output
+if(plotting)
+   plot_data(plot_flags,mean_wind_speeds,outdata_names);
+end
+
+if(dels_flag)
+   plot_dels(mean_wind_speeds,del_names); 
+end
+
+% if(power_flag)
+%    plot_power(mean_wind_speeds); 
+% end
 
 %% weighted by wind freq DELs 
 Del_eq=zeros(1,num_loads);
@@ -201,14 +138,16 @@ for i=1:size(mean_wind_speeds,2)
     Del_eq = Del_eq + weight_by_windspeed(mean_wind_speeds(1,i),wind_speed_diff,loads(i,:));
     
 end
-    Del_eq = Del_eq/size(mean_wind_speeds,2)
+    Del_eq = Del_eq/size(mean_wind_speeds,2);
+    
+    writematrix(Del_eq,'./Logged_Outdata/DELs_eq.csv');
 
 %calculates the dels for the last simulation run
-function avg = get_weighted_load(OutList)
+function avg = get_weighted_load(OutList,outfile_path)
 
     %load the data
     
-    Data = importdata('NREL_Baseline_multi.SFunc.out','\t',8).data;
+    Data = importdata(outfile_path,'\t',8).data;
 
     T = Data(:,find(contains(OutList,'Time'))); %#ok<*FNDSB,*USENS>
     MyT = Data(:,find(contains(OutList,'TwrBsMyt')));
@@ -224,7 +163,7 @@ function avg = get_weighted_load(OutList)
     avg = zeros(size(moments,2),1);
     
     for i=1:size(moments,2)
-        avg(i,1) = get_average_moment(rainflow(moments(1:end,i)),wohler(i),T(end)-T(1));
+        avg(i,1) = get_average_moment(rainflow(moments(50:end,i)),wohler(i),T(end)-T(50));
     end
 
 end 
@@ -259,49 +198,103 @@ function sum = get_average_moment(c,m,t)
 sum = 0;
 
     for i=1:size(c,1)
-        sum = sum + c(i,1)*c(i,2)^m/t;
+        sum = sum + (c(i,1)*c(i,2)^m);
     end
-    sum = sum^(1/m);
+    sum = 6.307*10^8*sum^(1/m)/(t);
 
 end
 
 
-%generate a .bts wind file with turbsim ouput in the 5MW_Baseline/Wind directory
+%generate a .bts wind file with turbsim ouput in the 5MW_Baseline/Wind/multi_wind directory
 function generate_wind_file(mean_wind_speed)
     
     %update input file
     line_in_file = 36; % change this to itterate over other properties, NOTE:line indexes start at 0.
-    cmd = sprintf('cd ./5MW_Baseline/Wind/turbsim & replace_number_on_line.exe %d %d unsteady_10min_multi.inp',line_in_file,mean_wind_speed);
+    tmp_name = sprintf('unsteady_tmp_%d',mean_wind_speed);
+    tmp_path = sprintf('./5MW_Baseline/Wind/turbsim/%s',tmp_name);
+    copyfile('./5MW_Baseline/Wind/turbsim/unsteady_10min_multi.inp',sprintf('%s.inp',tmp_path));
+    cmd = sprintf('cd ./5MW_Baseline/Wind/turbsim & replace_number_on_line.exe %d %d %s.inp',line_in_file,mean_wind_speed,tmp_path);
     system(cmd)
     
-
     %runturbsim
-    system('cd ./5MW_Baseline/Wind/turbsim & turbsim.exe unsteady_10min_multi.inp')
+    
+    cmd = system('cd ./5MW_Baseline/Wind/turbsim & turbsim.exe %s.inp',tmp_name);
+    system(cmd)
+    
+    new_path = sprintf('./5MW_Baseline/Wind/multi_wind/%s.bts',tmp_name);
+    movefile(sprintf('%s.bts',tmp_path),new_path);
 
-    %move and rename file
-    new_path = sprintf('./5MW_Baseline/Wind/multi_wind/unsteady_10min_%d.bts',mean_wind_speed);
-    movefile('./5MW_Baseline/Wind/turbsim/unsteady_10min_multi.bts',new_path);
 
 end
+%returns the power from the generator torue and velocity since FAST is not
+%outputing G power directly
+function P = get_power(OutList,outfile_paths,mean_wind_speeds)
+    
 
-%run a simulation for the given mean_wind_speed
-function run_sim(mean_wind_speed,TMax)
+    Data = importdata(outfile_paths{1},'\t',8).data;
+    T = Data(:,find(contains(OutList,'Time'))); %#ok<*FNDSB,*USENS>
+    P = zeros(size(T,1),size(mean_wind_speeds,2)+1);
+    P(:,1) = T;
+    for i=1:size(mean_wind_speeds)
 
-    %update the input file
-    new_name = sprintf('Wind/multi_wind/unsteady_10min_%d.bts',mean_wind_speed);
-    cmd = sprintf('replace_string.exe windfile_placeholder %s ./5MW_Baseline/NRELOffshrBsline5MW_InflowWind_unsteady_multi.dat',new_name);
-    system(cmd)
-    new_path = sprintf('./5MW_Baseline/%s',new_name);
-    if(~isfile(new_path))
-        generate_wind_file(mean_wind_speed)
+        Data = importdata(outfile_paths{i},'\t',8).data;
+        Tq = Data(:,find(contains(OutList,'GenTq')));
+        omega_g = Data(:,find(contains(OutList,'GenSpeed')));
+        P = zeros(size(T,1),1);
+        for i=1:size(T)
+           P(:,i+1) = Tq.*omega_g*2*pi/60; %for some reason FAST outputs rpm 
+        end
     end
     
-    %run simulation
-    sim('Top_Model',[0,TMax]);
     
-    %tidy up
-    cmd = sprintf('replace_string.exe %s  windfile_placeholder ./5MW_Baseline/NRELOffshrBsline5MW_InflowWind_unsteady_multi.dat',new_name);
-    system(cmd)
 end
 
 
+%Plots data from the Logged_Outdata directory
+function plot_data(plot_flags,windspeeds,names)
+
+     for j = 1:size(windspeeds,2)
+
+
+         Data = load(sprintf('./Logged_Outdata/outfile_for_%d_wind.mat',windspeeds(1,j))).data;
+         data = Data.data;
+         time = Data.time;
+
+
+         for i=1:size(plot_flags,1)-2
+            if(plot_flags(i))
+                figure()
+                plot(time,data(:,i));
+                title(sprintf('%s windspeed %d',char(names(i)),windspeeds(j)))
+            end
+         end
+     end
+end
+
+%plots the dels as a bar graph
+function plot_dels(windspeeds,del_names)
+ loads = csvread('./Logged_Outdata/DELs.csv');
+ for i = 1:size(loads,2)
+    figure()
+    bar(windspeeds,loads(:,i)) 
+    title(sprintf('DELs for %s',char(del_names(i))))
+    xlabel windspeeds
+    ylabel DEL
+     
+ end
+     
+
+end
+
+%plots the power from the last simulation run
+function plot_power(mean_wind_speeds)
+    P = readmatrix('./Logged_Outdata/Power.csv');
+    for i=1:size(mean_wind_speeds,2)
+        figure()
+        plot(P(:,1),P(:,i+1));
+        title(sprintf('Power for windspeed %d',mean_wind_speeds(i)));
+        xlabel power
+        ylabel time
+
+    end
+end
