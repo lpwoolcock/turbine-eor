@@ -1,2 +1,3 @@
-simulink_outfile*
+outfile_for*
 DELs.csv
+NREL_input_tmp_*

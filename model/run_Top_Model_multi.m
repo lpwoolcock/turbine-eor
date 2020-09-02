@@ -11,7 +11,7 @@ clear;
 %% wind speeds input
 %This script allows for the batch simulation over a range of wind speeds
 %it generates apropriate wind files, using turbsim automatically,
-%and catchs them to speed up subsequent runs.
+%and caches them to speed up subsequent runs.
 %to change wind properties except mean speed update:
 %model\5MW_Baseline\Wind\turbsim\unsteady_10min_multi.inp
 %If you make a change make sure to also clear the catch at 
@@ -85,7 +85,7 @@ end
 %% run the model
 
 parsim(simIn);
-
+%%
 for i=1:size(mean_wind_speeds,2)
     movefile(sprintf('simulink_outfile_%d.mat',i),sprintf('./Logged_Outdata/outfile_for_%d_wind.mat',mean_wind_speeds(1,i)));
 end
