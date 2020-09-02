@@ -85,7 +85,7 @@ end
 %% run the model
 
 parsim(simIn);
-%%
+
 for i=1:size(mean_wind_speeds,2)
     movefile(sprintf('simulink_outfile_%d.mat',i),sprintf('./Logged_Outdata/outfile_for_%d_wind.mat',mean_wind_speeds(1,i)));
 end
