@@ -10,13 +10,20 @@ clear;
 generator_params;
 tp = turbine_params_5MW();
 DT = 0.00625;
-T_mean = 60; % Time to calculate mean windspeed
+T_mean = 600; % Time to calculate mean windspeed
 T_cal = T_mean + 10; % Total calibration time (i.e additional time required for parameter estimation)
 T_s = 0.1; % note this is 16*DT
 
 % baseline control region 2
 % units of MNm/(rads^-1)^2
+M_rated = 1e-6 * tp.P_rated / tp.Omega_r_rated;
+
 K_T = 0.5e-6*pi*tp.rho*tp.R^5*tp.C_p_star/(tp.lambda_star^3);
+
+Omega_1 = tp.Omega_r_rated * 0.9;
+Omega_2 = tp.Omega_r_rated;
+
+M_1 = K_T * Omega_1^2;
 
 % no. of samples in wind exosystem
 N_w = 3;
