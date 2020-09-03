@@ -1,7 +1,7 @@
 0.00 21-Sep-2012 
 NOTE: IF you make changes to this file make sure to clear the catch of wind files in the Wind\multi_wind directory. 
 ---------Runtime Options-----------------------------------
-2318573             RandSeed1       - First random seed  (-2147483648 to 2147483647) 
+65432154            RandSeed1       - First random seed  (-2147483648 to 2147483647) 
 RANLUX              RandSeed2       - Second random seed (-2147483648 to 2147483647) for intrinsic pRNG, or an alternative pRNG: "RanLux" or "RNSNLW"
 False               WrBHHTP         - Output hub-height turbulence parameters in binary form?  (Generates RootName.bin)
 False               WrFHHTP         - Output hub-height turbulence parameters in formatted form?  (Generates RootName.dat)
@@ -15,14 +15,14 @@ True                Clockwise       - Clockwise rotation looking downwind? (used
  0                  ScaleIEC        - Scale IEC turbulence models to exact target standard deviation? [0=no additional scaling; 1=use hub scale uniformly; 2=use individual scales]
  
 --------Turbine/Model Specifications-----------------------
-31                  NumGrid_Z       - Vertical grid-point matrix dimension
-31                  NumGrid_Y       - Horizontal grid-point matrix dimension
+33                  NumGrid_Z       - Vertical grid-point matrix dimension
+33                  NumGrid_Y       - Horizontal grid-point matrix dimension
 0.05                TimeStep        - Time step [seconds]
-60                  AnalysisTime    - Length of analysis time series [seconds] (program will add time if necessary: AnalysisTime = MAX(AnalysisTime, UsableTime+GridWidth/MeanHHWS) )
-60                  UsableTime      - Usable length of output time series [seconds] (program will add GridWidth/MeanHHWS seconds)
+3600                 AnalysisTime    - Length of analysis time series [seconds] (program will add time if necessary: AnalysisTime = MAX(AnalysisTime, UsableTime+GridWidth/MeanHHWS) )
+3600                  UsableTime      - Usable length of output time series [seconds] (program will add GridWidth/MeanHHWS seconds)
 87.6                HubHt           - Hub height [m] (should be > 0.5*GridHeight)
-140.00              GridHeight      - Grid height [m] 
-140.00              GridWidth       - Grid width [m] (should be >= 2*(RotorRadius+ShaftLength))
+130.00              GridHeight      - Grid height [m] 
+130.00              GridWidth       - Grid width [m] (should be >= 2*(RotorRadius+ShaftLength))
 0                   VFlowAng        - Vertical mean flow (uptilt) angle [degrees]
 0                   HFlowAng        - Horizontal mean flow (skew) angle [degrees]
   
@@ -33,14 +33,8 @@ True                Clockwise       - Clockwise rotation looking downwind? (used
 "NTM"               IEC_WindType    - IEC turbulence type ("NTM"=normal, "xETM"=extreme turbulence, "xEWM1"=extreme 1-year wind, "xEWM50"=extreme 50-year wind, where x=wind turbine class 1, 2, or 3)
 default             ETMc            - IEC Extreme Turbulence Model "c" parameter [m/s]
 default             WindProfileType - Wind profile type ("JET";"LOG"=logarithmic;"PL"=power law;"H2L"=Log law for TIDAL spectral model;"IEC"=PL on rotor disk, LOG elsewhere; or "default")
-90.0                RefHt           - Height of the reference wind speed [m]
-20.00                   URef            - Mean (total) wind speed at the reference height [m/s] (or "default" for JET wind profile)
-
-
-
-
-
-
+87.6                RefHt           - Height of the reference wind speed [m]
+20.0                URef            - Mean (total) wind speed at the reference height [m/s] (or "default" for JET wind profile)
 default             ZJetMax         - Jet height [m] (used only for JET wind profile, valid 70-490 m)
 default             PLExp           - Power law exponent [-] (or "default")           
 default             Z0              - Surface roughness length [m] (or "default")

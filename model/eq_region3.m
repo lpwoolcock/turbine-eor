@@ -8,6 +8,6 @@ function [x_star, u_star, A, B, C, H, K] = eq_region3(tp, vx0, T)
     
     % needs to be using discretized versions
     coder.extrinsic('lqr');
-    [K,~,~] = lqr(A_c,B_c,C.'*C,1);
+    [K,~,~] = lqr(A_c,B_c,C.'*C,20);
 end
 

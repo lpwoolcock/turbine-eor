@@ -10,7 +10,7 @@ clear;
 generator_params;
 tp = turbine_params_5MW();
 DT = 0.00625;
-T_mean = 600; % Time to calculate mean windspeed
+T_mean = 180; % Time to calculate mean windspeed
 T_cal = T_mean + 10; % Total calibration time (i.e additional time required for parameter estimation)
 T_s = 0.1; % note this is 16*DT
 
@@ -39,7 +39,7 @@ C_d = 6.2e6;
 
 % parameters required for the S-Function block:
 FAST_InputFileName = 'NREL_Baseline.fst';
-TMax = 600;
+TMax = 3600;
 
 % Initial conditions
 Omega_r_0 = 1;
@@ -64,7 +64,7 @@ alpha = 0.000015;
 V = alpha*eye(2);
 
 % Model uncertainty - Don't tune unless necessary
-G = diag(1.4, 0, 1.4, 4.5);
+G = diag([1.4 0 1.4 4.5]);
 W = eye(4);
 
 [KEST, L_kalman, P] = kalman(ss(A_aug, [B_aug G], C_aug, 0), W, V);

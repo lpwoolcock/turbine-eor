@@ -19,7 +19,7 @@ clear;
 %to itterate over different properties update 
 %line_in_file in generate_wind_file(mean_wind_speed) function.
 
-mean_wind_speeds = [8 10 12 14 16]; %change this to change wind speeds simulated over; ints only sorry
+mean_wind_speeds = [8 10 12 14 16 18 20 22 24]; %change this to change wind speeds simulated over; ints only sorry
 num_loads = 5;                %MyT MxT MyB MxB LSS
 
 %% Toggle flags to turn on and off which data is plotted
@@ -46,25 +46,26 @@ del_names = {'MyT', 'MxT', 'MyB', 'MxB', 'LSS'};
 loads = zeros(size(mean_wind_speeds,2),num_loads);
 
 %% generate input files
+parfor i=1:size(mean_wind_speeds,2)
+   new_windfile_name = sprintf('Wind/multi_wind/unsteady_tmp_%d.bts',mean_wind_speeds(i));
+   pause(i);
+   if(~isfile(sprintf('./5MW_Baseline/%s',new_windfile_name)))
+        generate_wind_file(mean_wind_speeds(i));
+   end
+end
+
 for i=1:size(mean_wind_speeds,2)
-    
    tmp_iw_name = sprintf('5MW_Baseline/NREL_inflowWind_tmp_%d.dat',mean_wind_speeds(i));
    copyfile('./5MW_Baseline/NRELOffshrBsline5MW_InflowWind_unsteady_multi.dat',sprintf('./%s',tmp_iw_name));
-   new_windfile_name = sprintf('Wind/multi_wind/unsteady_10min_%d.bts',mean_wind_speeds(i));
+   new_windfile_name = sprintf('Wind/multi_wind/unsteady_tmp_%d.bts',mean_wind_speeds(i));
    cmd = sprintf('replace_string.exe windfile_placeholder  %s %s',new_windfile_name,tmp_iw_name);
    
    system(cmd)
-   
-   if(~isfile(sprintf('./5MW_Baseline/%s',new_windfile_name)))
-        generated_windfile_ok = generate_wind_file(mean_wind_speeds(i))
-   end
-   
    
    tmp_inp_name = sprintf('NREL_input_tmp_%d.fst',mean_wind_speeds(i));
    copyfile('NREL_Baseline_multi.fst',tmp_inp_name);
    cmd = sprintf('replace_string.exe inflow_placeholder %s %s',tmp_iw_name,tmp_inp_name);
    system(cmd)
- 
 end
 
 %% set up model input
@@ -76,15 +77,15 @@ simIn(1:size(mean_wind_speeds,2)) = Simulink.SimulationInput(model);
 
 for i = 1:size(mean_wind_speeds,2)
     
-   simIn(i) = simIn(i).setVariable('FAST_InputFileName',sprintf('NREL_input_tmp_%d.fst',mean_wind_speeds(1,i))); 
-   
+   simIn(i) = simIn(i).setVariable('FAST_InputFileName',sprintf('C:\\Users\\lpwoolcock\\Documents\\turbine-eor\\model\\NREL_input_tmp_%d.fst',mean_wind_speeds(1,i))); 
+
 end
 
 
  
 %% run the model
 
-parsim(simIn);
+simOut = parsim(simIn);
 
 for i=1:size(mean_wind_speeds,2)
     movefile(sprintf('simulink_outfile_%d.mat',i),sprintf('./Logged_Outdata/outfile_for_%d_wind.mat',mean_wind_speeds(1,i)));
@@ -94,7 +95,7 @@ end
  for i=1:size(mean_wind_speeds,2)
      
      outfile_path = sprintf('NREL_input_tmp_%d.SFunc.out',mean_wind_speeds(1,i));
-     avg = get_weighted_load(OutList,outfile_path);
+     avg = get_weighted_load(outfile_path);
      loads(i,:) = avg';
      movefile(outfile_path,sprintf('./Logged_Outdata/%s',outfile_path))
  end
@@ -142,13 +143,20 @@ end
     
     writematrix(Del_eq,'./Logged_Outdata/DELs_eq.csv');
 
+function OutList = get_OutList(outfile_path)
+    opts = delimitedTextImportOptions('DataLines', [7 7], 'Delimiter', '\t', 'Whitespace', ' ');
+    OutListT = readtable(outfile_path, opts);
+    OutList = strtrim(table2cell(OutListT));
+end
+    
 %calculates the dels for the last simulation run
-function avg = get_weighted_load(OutList,outfile_path)
+function avg = get_weighted_load(outfile_path)
 
     %load the data
-    
-    Data = importdata(outfile_path,'\t',8).data;
 
+    Data = importdata(outfile_path,'\t',8).data;
+    OutList = get_OutList(outfile_path);
+    
     T = Data(:,find(contains(OutList,'Time'))); %#ok<*FNDSB,*USENS>
     MyT = Data(:,find(contains(OutList,'TwrBsMyt')));
     MxT = Data(:,find(contains(OutList,'TwrBsMxt')));
@@ -163,7 +171,7 @@ function avg = get_weighted_load(OutList,outfile_path)
     avg = zeros(size(moments,2),1);
     
     for i=1:size(moments,2)
-        avg(i,1) = get_average_moment(rainflow(moments(50:end,i)),wohler(i),T(end)-T(50));
+        avg(i,1) = get_average_moment(rainflow(moments(650:end,i)),wohler(i),T(end)-T(50));
     end
 
 end 
@@ -211,14 +219,14 @@ function generate_wind_file(mean_wind_speed)
     %update input file
     line_in_file = 36; % change this to itterate over other properties, NOTE:line indexes start at 0.
     tmp_name = sprintf('unsteady_tmp_%d',mean_wind_speed);
-    tmp_path = sprintf('./5MW_Baseline/Wind/turbsim/%s',tmp_name);
-    copyfile('./5MW_Baseline/Wind/turbsim/unsteady_10min_multi.inp',sprintf('%s.inp',tmp_path));
-    cmd = sprintf('cd ./5MW_Baseline/Wind/turbsim & replace_number_on_line.exe %d %d %s.inp',line_in_file,mean_wind_speed,tmp_path);
+    tmp_path = sprintf('5MW_Baseline\\Wind\\turbsim\\%s',tmp_name);
+    copyfile('./5MW_Baseline/Wind/turbsim/unsteady_60min_multi.inp',sprintf('%s.inp',tmp_path));
+    cmd = sprintf('5MW_Baseline\\Wind\\turbsim\\replace_number_on_line.exe %d %d %s.inp',line_in_file,mean_wind_speed,tmp_path);
     system(cmd)
     
     %runturbsim
     
-    cmd = system('cd ./5MW_Baseline/Wind/turbsim & turbsim.exe %s.inp',tmp_name);
+    cmd = sprintf('cd ./5MW_Baseline/Wind/turbsim & turbsim.exe %s.inp',tmp_name);
     system(cmd)
     
     new_path = sprintf('./5MW_Baseline/Wind/multi_wind/%s.bts',tmp_name);
@@ -228,9 +236,9 @@ function generate_wind_file(mean_wind_speed)
 end
 %returns the power from the generator torue and velocity since FAST is not
 %outputing G power directly
-function P = get_power(OutList,outfile_paths,mean_wind_speeds)
+function P = get_power(outfile_paths,mean_wind_speeds)
     
-
+    OutList = get_OutList(outfile_path);
     Data = importdata(outfile_paths{1},'\t',8).data;
     T = Data(:,find(contains(OutList,'Time'))); %#ok<*FNDSB,*USENS>
     P = zeros(size(T,1),size(mean_wind_speeds,2)+1);
