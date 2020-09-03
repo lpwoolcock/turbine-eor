@@ -138,6 +138,7 @@ end
 
 %% weighted by wind freq DELs 
 Del_eq=zeros(1,num_loads);
+
 if(size(mean_wind_speeds,2)>1)
     wind_speed_diff = abs(mean_wind_speeds(2)-mean_wind_speeds(1));
 else
@@ -148,7 +149,8 @@ for i=1:size(mean_wind_speeds,2)
     Del_eq = Del_eq + weight_by_windspeed(mean_wind_speeds(1,i),wind_speed_diff,loads(i,:));
     
 end
-    Del_eq = Del_eq/size(mean_wind_speeds,2);
+    %normalise the distribution over the region simulated
+    Del_eq = Del_eq/get_weibull(mean_wind_speed(1,1)-wind_speed_diff/2,mean_wind_speed(1,end)+wind_speed_diff/2); 
     
     writematrix(Del_eq,'./Logged_Outdata/DELs_eq.csv');
 
@@ -210,7 +212,7 @@ sum = 0;
     for i=1:size(c,1)
         sum = sum + (c(i,1)*c(i,2)^m);
     end
-    sum = sum^(1/m)/(t);
+    sum = sum/t;
 
 end
 
