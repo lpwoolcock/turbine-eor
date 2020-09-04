@@ -14,14 +14,15 @@ clear;
 %and caches them to speed up subsequent runs.
 %to change wind properties except mean speed update:
 %model\5MW_Baseline\Wind\turbsim\unsteady_10min_multi.inp
-%If you make a change make sure to also clear the catch at 
-%model\5MW_Baseline\Wind\multi_wind of files unsteady_10min_*.bts
+%If you make a change make sure to also clear the cache at 
+%model\5MW_Baseline\Wind\multi_wind of files unsteady_tmp_*.bts
 %to itterate over different properties update 
 %line_in_file in generate_wind_file(mean_wind_speed) function.
 
-mean_wind_speeds = [8 10 12 14 16 18 20 22 24]; %change this to change wind speeds simulated over; ints only sorry
-num_loads = 5;                %MyT MxT MyB MxB LSS
-
+mean_wind_speeds = [8 10 12 14 16]; %change this to change wind speeds simulated over; ints only sorry
+num_loads = 5;                 %MyT MxT MyB MxB LSS
+sim_time = 600;               %set the simulation time, if you change this set clear cache to true for first run
+clear_cache = true;            %flag to clear the wind file cache
 %% Toggle flags to turn on and off which data is plotted
 
 plotting = true;    %toggle to turn on\off data plotting
@@ -55,6 +56,7 @@ parfor i=1:size(mean_wind_speeds,2)
 end
 
 for i=1:size(mean_wind_speeds,2)
+    
    tmp_iw_name = sprintf('5MW_Baseline/NREL_inflowWind_tmp_%d.dat',mean_wind_speeds(i));
    copyfile('./5MW_Baseline/NRELOffshrBsline5MW_InflowWind_unsteady_multi.dat',sprintf('./%s',tmp_iw_name));
    new_windfile_name = sprintf('Wind/multi_wind/unsteady_tmp_%d.bts',mean_wind_speeds(i));
@@ -72,13 +74,16 @@ end
 
 model = 'Top_Model';
 load_system(model)
+set_param(model, 'StopTime', num2str(sim_time));
+save_system Top_Model Top_Model.slx
+load_system(model)
 
 simIn(1:size(mean_wind_speeds,2)) = Simulink.SimulationInput(model);
 
 for i = 1:size(mean_wind_speeds,2)
     
-   simIn(i) = simIn(i).setVariable('FAST_InputFileName',sprintf('C:\\Users\\lpwoolcock\\Documents\\turbine-eor\\model\\NREL_input_tmp_%d.fst',mean_wind_speeds(1,i))); 
-
+   simIn(i) = simIn(i).setVariable('FAST_InputFileName',sprintf('NREL_input_tmp_%d.fst',mean_wind_speeds(1,i))); 
+   
 end
 
 
@@ -139,7 +144,8 @@ for i=1:size(mean_wind_speeds,2)
     Del_eq = Del_eq + weight_by_windspeed(mean_wind_speeds(1,i),wind_speed_diff,loads(i,:));
     
 end
-    Del_eq = Del_eq/size(mean_wind_speeds,2);
+    %normalise the distribution over the region simulated
+    Del_eq = Del_eq/get_weibull(mean_wind_speed(1,1)-wind_speed_diff/2,mean_wind_speed(1,end)+wind_speed_diff/2); 
     
     writematrix(Del_eq,'./Logged_Outdata/DELs_eq.csv');
 
@@ -208,13 +214,13 @@ sum = 0;
     for i=1:size(c,1)
         sum = sum + (c(i,1)*c(i,2)^m);
     end
-    sum = 6.307*10^8*sum^(1/m)/(t);
+    sum = sum/t;
 
 end
 
 
 %generate a .bts wind file with turbsim ouput in the 5MW_Baseline/Wind/multi_wind directory
-function generate_wind_file(mean_wind_speed)
+function generate_wind_file(mean_wind_speed,sim_time)
     
     %update input file
     line_in_file = 36; % change this to itterate over other properties, NOTE:line indexes start at 0.
