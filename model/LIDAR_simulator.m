@@ -1,24 +1,23 @@
 
-windspeeds = [8];               %windspeeds to simulate over
+windspeeds = [12 14 22 24];               %windspeeds to simulate over
 
 t_s = 0.02;                  %sample rate of LIDAR
-sim_time = 600;                  %simulation time
+sim_time = 3600;                  %simulation time
 LIDAR_focal_distance = 60;      %focal distance of the LIDAR
 grid_width = 70;                % simulation width for FAST
 N = 3000;                         % FIR filter length
 
 t=1:t_s:sim_time; 
-u_inf = zeros(numel(t),1);
 windfile_path = "./5MW_Baseline/Wind/multi_wind/";
 LIDAR_wind_path = "./5MW_Baseline/Wind/LIDAR_wind/";
 
 
-for j = 1:numel(windspeeds)
+parfor j = 1:numel(windspeeds)
     
     windfile_name = sprintf("unsteady_tmp_%d.bts",windspeeds(j));
     LIDAR_wind_name = sprintf("LIDAR_wind_%d.csv",windspeeds(j));
     [velocity, twrVelocity, y, z, zTwr, nz, ny, dz, dy, dt, zHub, z1,mffws] = readTSgrid(convertStringsToChars(sprintf("%s%s",windfile_path,windfile_name))); 
-
+    u_inf = zeros(numel(t),1);
     for i = 1:numel(t)
 
     u_inf(i,1) = LIDAR(velocity, twrVelocity, y, z, zTwr, nz, ny, dz, dy, dt, zHub, z1,mffws,LIDAR_focal_distance,grid_width, t(i));
@@ -26,14 +25,14 @@ for j = 1:numel(windspeeds)
     end
     % Now filter the scanned measurements
     Bw = 87/(LIDAR_focal_distance^2); % cut off frequency in m^-1
-    omega_c = 2*pi*Bw*mffws; % cut off frequency in rad/s
+    omega_c = 2*pi*Bw;%*mffws; % cut off frequency in rad/s
     wc = omega_c*t_s; % cut off freq in rad/sample, should be multiplied by ts ...
     
     u_inf_filtered = FIR_lowpass(N, wc, u_inf);
     
     
     writematrix([t',u_inf_filtered],sprintf("%s%s",LIDAR_wind_path,LIDAR_wind_name));
-
+%{
     figure()
     
     hold on
@@ -45,7 +44,7 @@ for j = 1:numel(windspeeds)
     plot(time(1:end),data(1:end,1));
     legend('LIDAR unfiltered','LIDAR', 'U inf')
                 
-         
+  %}       
          
    hold off
 end
