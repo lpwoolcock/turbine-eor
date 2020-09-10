@@ -145,7 +145,7 @@ for i=1:size(mean_wind_speeds,2)
     
 end
     %normalise the distribution over the region simulated
-    Del_eq = Del_eq/get_weibull(mean_wind_speed(1,1)-wind_speed_diff/2,mean_wind_speed(1,end)+wind_speed_diff/2); 
+    Del_eq = Del_eq/get_weibull(mean_wind_speeds(1,1)-wind_speed_diff/2,mean_wind_speeds(1,end)+wind_speed_diff/2); 
     
     writematrix(Del_eq,'./Logged_Outdata/DELs_eq.csv');
 
@@ -177,7 +177,7 @@ function avg = get_weighted_load(outfile_path)
     avg = zeros(size(moments,2),1);
     
     for i=1:size(moments,2)
-        avg(i,1) = get_average_moment(rainflow(moments(650:end,i)),wohler(i),T(end)-T(50));
+        avg(i,1) = get_average_moment(rainflow(moments(650:end,i)),wohler(i),T(end)-T(650));
     end
 
 end 
@@ -210,11 +210,13 @@ end
 function sum = get_average_moment(c,m,t)
 
 sum = 0;
-
+secs_in_20yrs = 6.307*10^8;
+nLCref = 2*10^6;
     for i=1:size(c,1)
         sum = sum + (c(i,1)*c(i,2)^m);
     end
-    sum = sum/t;
+    %weigting assume life time of 20years 
+    sum = ((secs_in_20yrs*sum)/(nLCref*t))^(1/m);
 
 end
 

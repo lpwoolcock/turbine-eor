@@ -47,9 +47,12 @@ del_names = {'MyT', 'MxT', 'MyB', 'MxB', 'LSS'};
 loads = zeros(size(mean_wind_speeds,2),num_loads);
 
 %% generate input files
-
-if(clear_cache)
-     delete 5MW_Baseline/Wind/multi_wind/unsteady_tmp_*;
+parfor i=1:size(mean_wind_speeds,2)
+   new_windfile_name = sprintf('Wind/multi_wind/unsteady_tmp_%d.bts',mean_wind_speeds(i));
+   pause(i);
+   if(~isfile(sprintf('./5MW_Baseline/%s',new_windfile_name)))
+        generate_wind_file(mean_wind_speeds(i));
+   end
 end
 
 for i=1:size(mean_wind_speeds,2)
@@ -61,16 +64,10 @@ for i=1:size(mean_wind_speeds,2)
    
    system(cmd)
    
-   if(~isfile(sprintf('./5MW_Baseline/%s',new_windfile_name)))
-       generate_wind_file(mean_wind_speeds(i),sim_time)
-   end
-   
-   
    tmp_inp_name = sprintf('NREL_input_tmp_%d.fst',mean_wind_speeds(i));
    copyfile('NREL_Baseline_multi.fst',tmp_inp_name);
    cmd = sprintf('replace_string.exe inflow_placeholder %s %s',tmp_iw_name,tmp_inp_name);
    system(cmd)
- 
 end
 
 %% set up model input
@@ -93,8 +90,8 @@ end
  
 %% run the model
 
-parsim(simIn);
-%%
+simOut = parsim(simIn);
+
 for i=1:size(mean_wind_speeds,2)
     movefile(sprintf('simulink_outfile_%d.mat',i),sprintf('./Logged_Outdata/outfile_for_%d_wind.mat',mean_wind_speeds(1,i)));
 end
@@ -103,7 +100,7 @@ end
  for i=1:size(mean_wind_speeds,2)
      
      outfile_path = sprintf('NREL_input_tmp_%d.SFunc.out',mean_wind_speeds(1,i));
-     avg = get_weighted_load(OutList,outfile_path);
+     avg = get_weighted_load(outfile_path);
      loads(i,:) = avg';
      movefile(outfile_path,sprintf('./Logged_Outdata/%s',outfile_path))
  end
@@ -118,7 +115,6 @@ end
  %Power = get_power(OutList,outfile_paths,mean_wind_speeds);
  %writematrix(Power,'./Logged_Outdata/Power.csv')
  
- %clean up
  delete NREL_input_tmp_*;
  delete 5MW_Baseline/NREL_inflowWind_tmp_*;
  
@@ -138,7 +134,6 @@ end
 
 %% weighted by wind freq DELs 
 Del_eq=zeros(1,num_loads);
-
 if(size(mean_wind_speeds,2)>1)
     wind_speed_diff = abs(mean_wind_speeds(2)-mean_wind_speeds(1));
 else
@@ -149,18 +144,25 @@ for i=1:size(mean_wind_speeds,2)
     Del_eq = Del_eq + weight_by_windspeed(mean_wind_speeds(1,i),wind_speed_diff,loads(i,:));
     
 end
-
-    Del_eq = Del_eq/get_weibull(mean_wind_speed(1,1),mean_wind_speed(1,end)); 
+    %normalise the distribution over the region simulated
+    Del_eq = Del_eq/get_weibull(mean_wind_speed(1,1)-wind_speed_diff/2,mean_wind_speed(1,end)+wind_speed_diff/2); 
     
     writematrix(Del_eq,'./Logged_Outdata/DELs_eq.csv');
 
+function OutList = get_OutList(outfile_path)
+    opts = delimitedTextImportOptions('DataLines', [7 7], 'Delimiter', '\t', 'Whitespace', ' ');
+    OutListT = readtable(outfile_path, opts);
+    OutList = strtrim(table2cell(OutListT));
+end
+    
 %calculates the dels for the last simulation run
-function avg = get_weighted_load(OutList,outfile_path)
+function avg = get_weighted_load(outfile_path)
 
     %load the data
-    
-    Data = importdata(outfile_path,'\t',8).data;
 
+    Data = importdata(outfile_path,'\t',8).data;
+    OutList = get_OutList(outfile_path);
+    
     T = Data(:,find(contains(OutList,'Time'))); %#ok<*FNDSB,*USENS>
     MyT = Data(:,find(contains(OutList,'TwrBsMyt')));
     MxT = Data(:,find(contains(OutList,'TwrBsMxt')));
@@ -175,7 +177,7 @@ function avg = get_weighted_load(OutList,outfile_path)
     avg = zeros(size(moments,2),1);
     
     for i=1:size(moments,2)
-        avg(i,1) = get_average_moment(rainflow(moments(50:end,i)),wohler(i),T(end)-T(50));
+        avg(i,1) = get_average_moment(rainflow(moments(650:end,i)),wohler(i),T(end)-T(50));
     end
 
 end 
@@ -208,11 +210,12 @@ end
 function sum = get_average_moment(c,m,t)
 
 sum = 0;
-
+secs_in_20yrs = 6.307e+8;
+nLCref = 2*10^6;
     for i=1:size(c,1)
         sum = sum + (c(i,1)*c(i,2)^m);
     end
-    sum = sum/(t);
+    sum = ((secs_in_20yrs*sum)/(nLCref*t))^(1/m);
 
 end
 
@@ -223,16 +226,11 @@ function generate_wind_file(mean_wind_speed,sim_time)
     %update input file
     line_in_file = 36; % change this to itterate over other properties, NOTE:line indexes start at 0.
     tmp_name = sprintf('unsteady_tmp_%d',mean_wind_speed);
-    tmp_path = sprintf('./5MW_Baseline/Wind/turbsim/%s',tmp_name);
-    copyfile('./5MW_Baseline/Wind/turbsim/unsteady_10min_multi.inp',sprintf('%s.inp',tmp_path));
-    cmd = sprintf('cd ./5MW_Baseline/Wind/turbsim & replace_number_on_line.exe %d %d %s.inp',line_in_file,mean_wind_speed,tmp_name);
+    tmp_path = sprintf('5MW_Baseline\\Wind\\turbsim\\%s',tmp_name);
+    copyfile('./5MW_Baseline/Wind/turbsim/unsteady_60min_multi.inp',sprintf('%s.inp',tmp_path));
+    cmd = sprintf('5MW_Baseline\\Wind\\turbsim\\replace_number_on_line.exe %d %d %s.inp',line_in_file,mean_wind_speed,tmp_path);
     system(cmd)
     
-    %update sim time magic numbers I know but feeling lazy
-    cmd = sprintf('cd ./5MW_Baseline/Wind/turbsim & replace_number_on_line.exe %d %d %s.inp',20,sim_time,tmp_name);
-    system(cmd)
-    cmd = sprintf('cd ./5MW_Baseline/Wind/turbsim & replace_number_on_line.exe %d %d %s.inp',21,sim_time,tmp_name);
-    system(cmd)
     %runturbsim
     
     cmd = sprintf('cd ./5MW_Baseline/Wind/turbsim & turbsim.exe %s.inp',tmp_name);
@@ -245,9 +243,9 @@ function generate_wind_file(mean_wind_speed,sim_time)
 end
 %returns the power from the generator torue and velocity since FAST is not
 %outputing G power directly
-function P = get_power(OutList,outfile_paths,mean_wind_speeds)
+function P = get_power(outfile_paths,mean_wind_speeds)
     
-
+    OutList = get_OutList(outfile_path);
     Data = importdata(outfile_paths{1},'\t',8).data;
     T = Data(:,find(contains(OutList,'Time'))); %#ok<*FNDSB,*USENS>
     P = zeros(size(T,1),size(mean_wind_speeds,2)+1);
@@ -258,8 +256,8 @@ function P = get_power(OutList,outfile_paths,mean_wind_speeds)
         Tq = Data(:,find(contains(OutList,'GenTq')));
         omega_g = Data(:,find(contains(OutList,'GenSpeed')));
         P = zeros(size(T,1),1);
-        for j=1:size(T)
-           P(:,j+1) = Tq.*omega_g*2*pi/60; %for some reason FAST outputs rpm 
+        for i=1:size(T)
+           P(:,i+1) = Tq.*omega_g*2*pi/60; %for some reason FAST outputs rpm 
         end
     end
     
