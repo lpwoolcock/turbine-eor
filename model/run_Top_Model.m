@@ -10,7 +10,7 @@ clear;
 generator_params;
 tp = turbine_params_5MW();
 DT = 0.00625;
-T_mean = 180; % Time to calculate mean windspeed
+T_mean = 100; % Time to calculate mean windspeed
 T_cal = T_mean + 10; % Total calibration time (i.e additional time required for parameter estimation)
 T_s = 0.1; % note this is 16*DT
 

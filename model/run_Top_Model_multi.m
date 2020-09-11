@@ -19,10 +19,12 @@ clear;
 %to itterate over different properties update 
 %line_in_file in generate_wind_file(mean_wind_speed) function.
 
-mean_wind_speeds = [8 10 12 14 16]; %change this to change wind speeds simulated over; ints only sorry
+mean_wind_speeds = [8 10]; %change this to change wind speeds simulated over; ints only sorry
 num_loads = 5;                 %MyT MxT MyB MxB LSS
-sim_time = 600;               %set the simulation time, if you change this set clear cache to true for first run
-clear_cache = true;            %flag to clear the wind file cache
+sim_time = 60;                 %set the simulation time, if you change this set clear cache to true for first run
+start_time = 120;              %when we start calculating DELs from
+clear_cache = false;           %flag to clear the wind file cache
+runLIDAR = true;               %flag to run the LIDAR simulator
 %% Toggle flags to turn on and off which data is plotted
 
 plotting = true;    %toggle to turn on\off data plotting
@@ -47,13 +49,21 @@ del_names = {'MyT', 'MxT', 'MyB', 'MxB', 'LSS'};
 loads = zeros(size(mean_wind_speeds,2),num_loads);
 
 %% generate input files
+if(clear_cache)
+     delete 5MW_Baseline/Wind/multi_wind/unsteady_tmp_*;
+end
+
 parfor i=1:size(mean_wind_speeds,2)
    new_windfile_name = sprintf('Wind/multi_wind/unsteady_tmp_%d.bts',mean_wind_speeds(i));
    pause(i);
    if(~isfile(sprintf('./5MW_Baseline/%s',new_windfile_name)))
-        generate_wind_file(mean_wind_speeds(i));
+        generate_wind_file(mean_wind_speeds(i), sim_time);
    end
 end
+
+% if(runLIDAR)
+%     run('LIDAR_simulator.m');
+% end
 
 for i=1:size(mean_wind_speeds,2)
     
@@ -82,8 +92,10 @@ simIn(1:size(mean_wind_speeds,2)) = Simulink.SimulationInput(model);
 
 for i = 1:size(mean_wind_speeds,2)
     
-   simIn(i) = simIn(i).setVariable('FAST_InputFileName',sprintf('NREL_input_tmp_%d.fst',mean_wind_speeds(1,i))); 
-   
+   simIn(i) = simIn(i).setVariable('FAST_InputFileName',sprintf('C:\\Users\\lpwoolcock\\Documents\\turbine-eor\\model\\NREL_input_tmp_%d.fst',mean_wind_speeds(1,i))); 
+   lidar_path = sprintf("5MW_Baseline/Wind/LIDAR_wind/LIDAR_wind_%d.csv", mean_wind_speeds(1,i));
+   lidar_dat = csvread(lidar_path);
+   simIn(i) = simIn(i).setVariable('lidar_data',  lidar_dat);
 end
 
 
@@ -100,7 +112,7 @@ end
  for i=1:size(mean_wind_speeds,2)
      
      outfile_path = sprintf('NREL_input_tmp_%d.SFunc.out',mean_wind_speeds(1,i));
-     avg = get_weighted_load(outfile_path);
+     avg = get_weighted_load(outfile_path, start_time);
      loads(i,:) = avg';
      movefile(outfile_path,sprintf('./Logged_Outdata/%s',outfile_path))
  end
@@ -156,7 +168,7 @@ function OutList = get_OutList(outfile_path)
 end
     
 %calculates the dels for the last simulation run
-function avg = get_weighted_load(outfile_path)
+function avg = get_weighted_load(outfile_path, t_start)
 
     %load the data
 
@@ -164,6 +176,7 @@ function avg = get_weighted_load(outfile_path)
     OutList = get_OutList(outfile_path);
     
     T = Data(:,find(contains(OutList,'Time'))); %#ok<*FNDSB,*USENS>
+    k_start = find(T>t_start,1);
     MyT = Data(:,find(contains(OutList,'TwrBsMyt')));
     MxT = Data(:,find(contains(OutList,'TwrBsMxt')));
     MyB = Data(:,find(contains(OutList,'RootMyb1')));
@@ -177,7 +190,7 @@ function avg = get_weighted_load(outfile_path)
     avg = zeros(size(moments,2),1);
     
     for i=1:size(moments,2)
-        avg(i,1) = get_average_moment(rainflow(moments(650:end,i)),wohler(i),T(end)-T(650));
+        avg(i,1) = get_average_moment(rainflow(moments(k_start:end,i)),wohler(i),T(end)-T(k_start));
     end
 
 end 
@@ -206,7 +219,7 @@ function p = weibull_CDF(x)
     p = 1-exp(-(x/C)^k);
 end
 
-%average moments
+%average moments DEL function
 function sum = get_average_moment(c,m,t)
 
 sum = 0;
@@ -224,11 +237,27 @@ end
 %generate a .bts wind file with turbsim ouput in the 5MW_Baseline/Wind/multi_wind directory
 function generate_wind_file(mean_wind_speed,sim_time)
     
+    tol=10; %add 10 seconds to handle lidar delay
+    sim_time=sim_time+tol;
+    
     %update input file
-    line_in_file = 36; % change this to itterate over other properties, NOTE:line indexes start at 0.
+  
     tmp_name = sprintf('unsteady_tmp_%d',mean_wind_speed);
     tmp_path = sprintf('5MW_Baseline\\Wind\\turbsim\\%s',tmp_name);
+    %Change sim time at the top not this file directly, just so its clearer what settings
+    %are being run
     copyfile('./5MW_Baseline/Wind/turbsim/unsteady_60min_multi.inp',sprintf('%s.inp',tmp_path));
+    
+    
+    line_in_file = 21; % simulation time
+    cmd = sprintf('5MW_Baseline\\Wind\\turbsim\\replace_number_on_line.exe %d %d %s.inp',line_in_file,sim_time,tmp_path);
+    system(cmd)
+    line_in_file = 20; % simulation time
+    cmd = sprintf('5MW_Baseline\\Wind\\turbsim\\replace_number_on_line.exe %d %d %s.inp',line_in_file,sim_time,tmp_path);
+    system(cmd)
+    
+    
+    line_in_file = 36; % change this to itterate over other properties, NOTE:line indexes start at 0.
     cmd = sprintf('5MW_Baseline\\Wind\\turbsim\\replace_number_on_line.exe %d %d %s.inp',line_in_file,mean_wind_speed,tmp_path);
     system(cmd)
     
