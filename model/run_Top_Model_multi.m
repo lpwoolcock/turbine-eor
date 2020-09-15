@@ -19,14 +19,14 @@ clear;
 %to itterate over different properties update 
 %line_in_file in generate_wind_file(mean_wind_speed) function.
 
-mean_wind_speeds = [8 10]; %change this to change wind speeds simulated over; ints only sorry
+mean_wind_speeds = [8 10 12 14 16 18 20 22 24]; %change this to change wind speeds simulated over; ints only sorry
 num_loads = 5;                 %MyT MxT MyB MxB LSS
-sim_time = 60;                 %set the simulation time, if you change this set clear cache to true for first run
-start_time = 120;              %when we start calculating DELs from
-clear_cache = false;           %flag to clear the wind file cache
+sim_time = 360;                 %set the simulation time, if you change this set clear cache to true for first run
+start_time = 60;              %when we start calculating DELs from
+clear_cache = true;           %flag to clear the wind file cache
 runLIDAR = true;               %flag to run the LIDAR simulator
 %% Toggle flags to turn on and off which data is plotted
-
+% 
 plotting = true;    %toggle to turn on\off data plotting
 
 %toggle to turn on/off which data is plotted
@@ -61,9 +61,9 @@ parfor i=1:size(mean_wind_speeds,2)
    end
 end
 
-% if(runLIDAR)
-%     run('LIDAR_simulator.m');
-% end
+ if(runLIDAR)
+     run('LIDAR_simulator.m');
+ end
 
 for i=1:size(mean_wind_speeds,2)
     
@@ -90,9 +90,10 @@ load_system(model)
 
 simIn(1:size(mean_wind_speeds,2)) = Simulink.SimulationInput(model);
 
+
 for i = 1:size(mean_wind_speeds,2)
     
-   simIn(i) = simIn(i).setVariable('FAST_InputFileName',sprintf('C:\\Users\\lpwoolcock\\Documents\\turbine-eor\\model\\NREL_input_tmp_%d.fst',mean_wind_speeds(1,i))); 
+   simIn(i) = simIn(i).setVariable('FAST_InputFileName',sprintf('./NREL_input_tmp_%d.fst',mean_wind_speeds(1,i))); 
    lidar_path = sprintf("5MW_Baseline/Wind/LIDAR_wind/LIDAR_wind_%d.csv", mean_wind_speeds(1,i));
    lidar_dat = csvread(lidar_path);
    simIn(i) = simIn(i).setVariable('lidar_data',  lidar_dat);
@@ -158,6 +159,10 @@ for i=1:size(mean_wind_speeds,2)
 end
     %normalise the distribution over the region simulated
     Del_eq = Del_eq/get_weibull(mean_wind_speeds(1,1)-wind_speed_diff/2,mean_wind_speeds(1,end)+wind_speed_diff/2); 
+    wohler = [4 4 10 10 4];             %weights to calculate the DELs
+    for i= 1:size(wohler,1)
+       Del_eq = Del_eq^(1/wohler(1,i));
+    end
     
     writematrix(Del_eq,'./Logged_Outdata/DELs_eq.csv');
 

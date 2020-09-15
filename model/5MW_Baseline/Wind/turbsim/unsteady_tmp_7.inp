@@ -18,8 +18,8 @@ True                Clockwise       - Clockwise rotation looking downwind? (used
 33                  NumGrid_Z       - Vertical grid-point matrix dimension
 33                  NumGrid_Y       - Horizontal grid-point matrix dimension
 0.05                TimeStep        - Time step [seconds]
-370.00                AnalysisTime    - Length of analysis time series [seconds] (program will add time if necessary: AnalysisTime = MAX(AnalysisTime, UsableTime+GridWidth/MeanHHWS) )
-370.00                UsableTime      - Usable length of output time series [seconds] (program will add GridWidth/MeanHHWS seconds)
+70.00                AnalysisTime    - Length of analysis time series [seconds] (program will add time if necessary: AnalysisTime = MAX(AnalysisTime, UsableTime+GridWidth/MeanHHWS) )
+70.00                UsableTime      - Usable length of output time series [seconds] (program will add GridWidth/MeanHHWS seconds)
 87.6                HubHt           - Hub height [m] (should be > 0.5*GridHeight)
 130.00              GridHeight      - Grid height [m] 
 130.00              GridWidth       - Grid width [m] (should be >= 2*(RotorRadius+ShaftLength))
@@ -34,7 +34,7 @@ True                Clockwise       - Clockwise rotation looking downwind? (used
 default             ETMc            - IEC Extreme Turbulence Model "c" parameter [m/s]
 default             WindProfileType - Wind profile type ("JET";"LOG"=logarithmic;"PL"=power law;"H2L"=Log law for TIDAL spectral model;"IEC"=PL on rotor disk, LOG elsewhere; or "default")
 87.6                RefHt           - Height of the reference wind speed [m]
-10.00                URef            - Mean (total) wind speed at the reference height [m/s] (or "default" for JET wind profile)
+7.00                URef            - Mean (total) wind speed at the reference height [m/s] (or "default" for JET wind profile)
 default             ZJetMax         - Jet height [m] (used only for JET wind profile, valid 70-490 m)
 default             PLExp           - Power law exponent [-] (or "default")           
 default             Z0              - Surface roughness length [m] (or "default")

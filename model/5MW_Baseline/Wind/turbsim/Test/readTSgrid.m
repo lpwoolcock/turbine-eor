@@ -127,5 +127,5 @@ end
 y = [0:ny-1]*dy - dy*(ny-1)/2;
 z = [0:nz-1]*dz + z1;
 zTwr = z1 - [0:ntwr-1]*dz;
-
+fclose(fid);
 return;

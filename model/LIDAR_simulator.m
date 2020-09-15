@@ -1,9 +1,8 @@
 
-%mean_wind_speeds = [12 14 22 24];  %windspeeds to simulate over comment
-%out to inherit from run_top_model_multi
+%mean_wind_speeds = [12 14 22 24];  %windspeeds to simulate over comment out to inherit from workspace
 
 t_s = 0.02;                  %sample rate of LIDAR
-sim_time = 3600;                  %simulation time
+%sim_time = 60;                  %simulation time comment out to inherit from workspace 
 LIDAR_focal_distance = 60;      %focal distance of the LIDAR
 grid_width = 70;                % simulation width for FAST
 N = 3000;                         % FIR filter length
@@ -14,14 +13,14 @@ LIDAR_wind_path = "./5MW_Baseline/Wind/LIDAR_wind/";
 
 
 parfor j = 1:numel(mean_wind_speeds)
-    
+    fprintf("Processing Lidar for %sm/s wind",mean_wind_speeds(j))
     windfile_name = sprintf("unsteady_tmp_%d.bts",mean_wind_speeds(j));
     LIDAR_wind_name = sprintf("LIDAR_wind_%d.csv",mean_wind_speeds(j));
-    [velocity, twrVelocity, y, z, zTwr, nz, ny, dz, dy, dt, zHub, z1,mffws] = readTSgrid(convertStringsToChars(sprintf("%s%s",windfile_path,windfile_name))); 
+    [velocity, twrVelocity, y, z, zTwr, nz, ny, dz, dy, dt, zHub, z1,mffws] = readTSgrid(convertStringsToChars(sprintf("%s%s",windfile_path,windfile_name)));
     u_inf = zeros(numel(t),1);
     for i = 1:numel(t)
-
-    u_inf(i,1) = LIDAR(velocity, twrVelocity, y, z, zTwr, nz, ny, dz, dy, dt, zHub, z1,mffws,LIDAR_focal_distance,grid_width, t(i));
+    
+        u_inf(i,1) = LIDAR(velocity, twrVelocity, y, z, zTwr, nz, ny, dz, dy, dt, zHub, z1,mffws,LIDAR_focal_distance,grid_width, t(i));
 
     end
     % Now filter the scanned measurements
@@ -47,7 +46,7 @@ parfor j = 1:numel(mean_wind_speeds)
                 
   %}       
          
-  % hold off
+ 
 end
 %%
 function u_lidar = LIDAR(velocity, twrVelocity, y, z, zTwr, nz, ny, dz, dy, dt, zHub, z1,mffws,focal_distance,grid_width, time) 
@@ -93,9 +92,9 @@ grid_pts = zeros(ny*nz,2);
 
  for i = 1:nz
     for j = 1:ny 
-        U_t(j+(i-1)*nz+1) = velocity(t,1,i,j); %indexing in matlab is the worst 
-        V_t(j+(i-1)*nz+1) = velocity(t,2,i,j);
-        W_t(j+(i-1)*nz+1) = velocity(t,3,i,j);
+        U_t(j+(i-1)*nz+1,1) = velocity(t,1,i,j); %indexing in matlab is the worst 
+        V_t(j+(i-1)*nz+1,1) = velocity(t,2,i,j);
+        W_t(j+(i-1)*nz+1,1) = velocity(t,3,i,j);
         grid_pts(j+(i-1)*nz+1,:) = [y(j),z(i)];
     end
  end
