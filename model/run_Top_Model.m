@@ -139,13 +139,13 @@ L_unknown = 10; %s = -10 pole
 
 %% Immersion and Invariance 
 % Tuning parameter
-gamma = 500;
+gamma = 20;
 ini_wind_speed = 0;
 
 %% Region 3 Pitch Rate Observer
 omega = 2*pi;
 zeta = 0.70;
-A_pitch = [0 1; omega^2 -2*zeta*omega];
+A_pitch = [0 1; -omega^2 -2*zeta*omega];
 B_pitch = [0; omega^2];
 C_pitch = [1 0];
 
@@ -154,8 +154,8 @@ alpha = 0.05;
 V = alpha; %tune this
 
 % Model uncertainty - Don't tune unless necessary
-G = [0; 1];
-W = 1;
+G = diag(0,1);
+W = eye(2);
 
 [KEST, L_kal_pitch, P] = kalman(ss(A_pitch, [B_pitch G], C_pitch, 0), W, V);
 
