@@ -1,0 +1,8 @@
+
+Predictions were generated on 22-Sep-2020 at 13:20:41 using FAST (v8.16.00a-bjj, 27-Jul-2016), compiled as a DLL S-Function for Simulink as a 64-bit application using single precision
+ linked with  NWTC Subroutine Library (v2.09.00, 23-Jul-2016); ElastoDyn (v1.04.00a-bjj, 26-Jul-2016); InflowWind (v3.03.00, 26-Jul-2016); AeroDyn (v15.03.00, 27-Jul-2016); ServoDyn (v1.06.00a-bjj, 26-Jul-2016)
+
+Description from the FAST input file: FAST Certification Test #18: NREL 5.0 MW Baseline Wind Turbine (Onshore)
+
+Time      	Wind1VelX 	Wind1VelY 	Wind1VelZ 	OoPDefl1  	IPDefl1   	TwstDefl1 	BldPitch1 	Azimuth   	RotSpeed  	GenSpeed  	TTDspFA   	TTDspSS   	TTDspTwst 	Spn2MLxb1 	Spn2MLyb1 	RootFxb1  	RootFyb1  	RootFzb1  	RootMxb1  	RootMyb1  	RootMzb1  	RotTorq   	RotAccel  	LSSGagMya 	LSSGagMza 	YawBrFxp  	YawBrFyp  	YawBrFzp  	YawBrMxp  	YawBrMyp  	YawBrMzp  	TwrBsFxt  	TwrBsFyt  	TwrBsFzt  	TwrBsMxt  	TwrBsMyt  	TwrBsMzt  	PtchPMzc1 	PtchPMzc2 	PtchPMzc3 	GenPwr    	GenTq     
+(s)       	(m/s)     	(m/s)     	(m/s)     	(m)       	(m)       	(deg)     	(deg)     	(deg)     	(rpm)     	(rpm)     	(m)       	(m)       	(deg)     	(kN·m)    	(kN·m)    	(kN)      	(kN)      	(kN)      	(kN·m)    	(kN·m)    	(kN·m)    	(kN·m)    	(deg/s^2) 	(kN·m)    	(kN·m)    	(kN)      	(kN)      	(kN)      	(kN·m)    	(kN·m)    	(kN·m)    	(kN)      	(kN)      	(kN)      	(kN·m)    	(kN·m)    	(kN·m)    	(deg)     	(deg)     	(deg)     	(kW)      	(kN·m)    

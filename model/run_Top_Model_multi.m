@@ -19,19 +19,19 @@ clear;
 %to itterate over different properties update 
 %line_in_file in generate_wind_file(mean_wind_speed) function.
 
-mean_wind_speeds = [8 10 12 14 16 18 20 22 24]; %change this to change wind speeds simulated over; ints only sorry
+mean_wind_speeds = [14]; %change this to change wind speeds simulated over; ints only sorry
 num_loads = 5;                 %MyT MxT MyB MxB LSS
 sim_time = 360;                 %set the simulation time, if you change this set clear cache to true for first run
 start_time = 60;              %when we start calculating DELs from
-clear_cache = true;           %flag to clear the wind file cache
-runLIDAR = true;               %flag to run the LIDAR simulator
+clear_cache = false;           %flag to clear the wind file cache
+runLIDAR = false;               %flag to run the LIDAR simulator
 %% Toggle flags to turn on and off which data is plotted
 % 
 plotting = true;    %toggle to turn on\off data plotting
 
 %toggle to turn on/off which data is plotted
-U_inf_flag = true;
-U_inf_hat_flag = true;
+U_inf_flag = false;
+U_inf_hat_flag = false;
 M_a_flag = false;
 M_g_flag = false;
 phi_hat_flag = false;
@@ -39,8 +39,8 @@ Lambda_flag = false;
 Lambda_star_flag = false;
 theta_flag = false;
 theta_c_flag = false;
-power_flag = true;
-dels_flag = true;
+power_flag = false;
+dels_flag = false;
 
 plot_flags = [U_inf_flag; U_inf_hat_flag; M_a_flag; M_g_flag; phi_hat_flag; Lambda_flag; Lambda_star_flag; theta_flag; theta_c_flag;power_flag ;dels_flag];
 outdata_names = {'Uinf', 'UinfHat', 'M_a', 'M_g', 'phiHat', 'Lambda', 'Lambda*', 'theta', 'theta_c','DELs'};
