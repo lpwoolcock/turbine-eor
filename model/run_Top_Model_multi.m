@@ -19,9 +19,9 @@ clear;
 %to itterate over different properties update 
 %line_in_file in generate_wind_file(mean_wind_speed) function.
 
-mean_wind_speeds = [8 10 12 14 16 18 20 22]; %change this to change wind speeds simulated over; ints only sorry
+mean_wind_speeds = [8 10 12 14 16 18 20]; %change this to change wind speeds simulated over; ints only sorry
 num_loads = 5;                %MyT MxT MyB MxB LSS
-sim_time = 3600;              %set the simulation time, if you change this set clear cache to true for first run
+sim_time = 360;              %set the simulation time, if you change this set clear cache to true for first run
 start_time = 60;              %when we start calculating DELs from
 clear_cache = false;           %flag to clear the wind file cache
 runLIDAR = false;              %flag to run the LIDAR simulator
