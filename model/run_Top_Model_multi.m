@@ -19,9 +19,9 @@ clear;
 %to itterate over different properties update 
 %line_in_file in generate_wind_file(mean_wind_speed) function.
 
-mean_wind_speeds = [8 10 12 14 16 18 20]; %change this to change wind speeds simulated over; ints only sorry
+mean_wind_speeds = [14 16]; %change this to change wind speeds simulated over; ints only sorry
 num_loads = 5;                %MyT MxT MyB MxB LSS
-sim_time = 360;              %set the simulation time, if you change this set clear cache to true for first run
+sim_time = 1000;              %set the simulation time, if you change this set clear cache to true for first run
 start_time = 60;              %when we start calculating DELs from
 clear_cache = false;           %flag to clear the wind file cache
 runLIDAR = false;              %flag to run the LIDAR simulator
@@ -39,7 +39,7 @@ Lambda_flag = false;
 Lambda_star_flag = false;
 theta_flag = false;
 theta_c_flag = false;
-power_flag = false;
+power_flag = true;
 dels_flag = true;
 
 plot_flags = [U_inf_flag; U_inf_hat_flag; M_a_flag; M_g_flag; phi_hat_flag; Lambda_flag; Lambda_star_flag; theta_flag; theta_c_flag;power_flag ;dels_flag];
@@ -124,9 +124,10 @@ end
  for i = 1:size(mean_wind_speeds,2)
     outfile_paths(i,1) = cellstr(sprintf('NREL_input_tmp_%d.SFunc.out',mean_wind_speeds(1,i)));
  end
- 
- %Power = get_power(OutList,outfile_paths,mean_wind_speeds);
- %writematrix(Power,'./Logged_Outdata/Power.csv')
+ %%
+ Power = get_power(outfile_paths,mean_wind_speeds);
+ writematrix(Power,'./Logged_Outdata/Power.csv')
+ sprintf('got_power\n');
  
  delete NREL_input_tmp_*;
  delete 5MW_Baseline/NREL_inflowWind_tmp_*;
@@ -141,9 +142,9 @@ if(dels_flag)
    plot_dels(mean_wind_speeds,del_names); 
 end
 
-% if(power_flag)
-%    plot_power(mean_wind_speeds); 
-% end
+ if(power_flag)
+    plot_power(mean_wind_speeds); 
+ end
 
 %% weighted by wind freq DELs 
 Del_eq=zeros(1,num_loads);
@@ -281,19 +282,20 @@ end
 %outputing G power directly
 function P = get_power(outfile_paths,mean_wind_speeds)
     
-    OutList = get_OutList(outfile_path);
+    OutList = get_OutList(outfile_paths{1});
     Data = importdata(outfile_paths{1},'\t',8).data;
     T = Data(:,find(contains(OutList,'Time'))); %#ok<*FNDSB,*USENS>
-    P = zeros(size(T,1),size(mean_wind_speeds,2)+1);
-    P(:,1) = T;
-    for i=1:size(mean_wind_speeds)
+    P = zeros(size(T,1),numel(mean_wind_speeds)+1);
+    P(:,1) = T(:,1);
+    for i=1:numel(mean_wind_speeds)
 
         Data = importdata(outfile_paths{i},'\t',8).data;
         Tq = Data(:,find(contains(OutList,'GenTq')));
         omega_g = Data(:,find(contains(OutList,'GenSpeed')));
-        P = zeros(size(T,1),1);
-        for i=1:size(T)
-           P(:,i+1) = Tq.*omega_g*2*pi/60; %for some reason FAST outputs rpm 
+        
+        
+        for j=1:size(T,1)
+            P(j,i+1) = Tq(j,1)*omega_g(j,1)*2*pi/60*0.001; %Power in MW
         end
     end
     
@@ -340,12 +342,12 @@ end
 %plots the power from the last simulation run
 function plot_power(mean_wind_speeds)
     P = readmatrix('./Logged_Outdata/Power.csv');
-    for i=1:size(mean_wind_speeds,2)
+    for i=1:numel(mean_wind_speeds)
         figure()
         plot(P(:,1),P(:,i+1));
         title(sprintf('Power for windspeed %d',mean_wind_speeds(i)));
-        xlabel power
-        ylabel time
+        xlabel time
+        ylabel power
 
     end
 end
