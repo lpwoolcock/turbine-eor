@@ -38,6 +38,6 @@ function [] = gen_wind_scenario(name, turbsim_template_filename, windspeeds, tim
     end
     
     turbsim_filenames = strcat(turbsim_filenames, '.bts');
-    save(strcat(name, '/', name, '.mat'), 'turbsim_filenames', 'lidar_filenames', 'windspeeds');
+    save(strcat(name, '/', name, '.mat'), 'turbsim_filenames', 'lidar_filenames', 'windspeeds', 'time', 't_s_lidar');
     fprintf('[%s] Wind scenario generation for "%s" complete.\n', string(datetime), name);
 end
