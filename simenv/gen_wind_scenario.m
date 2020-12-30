@@ -1,4 +1,4 @@
-function [] = gen_wind_scenario(name, turbsim_template_filename, windspeeds, time)   
+function [] = gen_wind_scenario(path, turbsim_template_filename, windspeeds, time)   
     template_text = read_text(turbsim_template_filename);
     K = length(windspeeds);
     
@@ -6,10 +6,14 @@ function [] = gen_wind_scenario(name, turbsim_template_filename, windspeeds, tim
     t_s_lidar = 0.02;
     t_fudge = N_lidar * t_s_lidar / 2;
     
-    path = strcat(name, '/');
+    mkdir(path);
+    s = what(path);
+    path_parts = split(s.path, '\');
+    path_parts = path_parts(strlength(path_parts) > 0);
+    name = path_parts{end};
+    path = strcat(s.path, '\');
     
     turbsim_filenames = cell(K,1);
-    mkdir(name);
     
     fprintf('[%s] Wind scenario generation for "%s" starting.\n', string(datetime), name);
     for k = 1:K
@@ -38,6 +42,6 @@ function [] = gen_wind_scenario(name, turbsim_template_filename, windspeeds, tim
     end
     
     turbsim_filenames = strcat(turbsim_filenames, '.bts');
-    save(strcat(name, '/', name, '.mat'), 'turbsim_filenames', 'lidar_filenames', 'windspeeds', 'time', 't_s_lidar');
+    save(strcat(path, name, '.mat'), 'turbsim_filenames', 'lidar_filenames', 'windspeeds', 'time', 't_s_lidar');
     fprintf('[%s] Wind scenario generation for "%s" complete.\n', string(datetime), name);
 end

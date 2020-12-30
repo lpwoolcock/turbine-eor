@@ -1,32 +1,42 @@
-function [simin] = gen_simin(wind_scenario_name, n, turbine_model_name, ...
-    controller_name)
+function [simin] = gen_simin(wind_scenario_path, n, turbine_model_path, ...
+    controller_name, observer_name)
     
-    mdlcpy_path = strcat('simtmp/mdl', string(n), '/');
+    mdlcpy_path = strcat('simtmp\mdl', string(n), '\');
 
     mkdir(mdlcpy_path);
     
-    copyfile(strcat('FAST_Models/', turbine_model_name, '/*'), mdlcpy_path);
+    s = what(turbine_model_path);
+    path_parts = split(s.path, '\');
+    path_parts = path_parts(strlength(path_parts) > 0);
+    turbine_model_name = path_parts{end};
+    turbine_model_path = strcat(s.path, '\');
+    
+    copyfile(strcat(turbine_model_path, '*'), mdlcpy_path);
     
     load(strcat(mdlcpy_path, turbine_model_name, '.mat'));
+    load(strcat(mdlcpy_path, turbine_model_name, '_CP.mat'));
     
-    load(strcat('Wind_Scenarios/', wind_scenario_name, '/', wind_scenario_name, '.mat'));
+    s = what(wind_scenario_path);
+    path_parts = split(s.path, '\');
+    path_parts = path_parts(strlength(path_parts) > 0);
+    wind_scenario_name = path_parts{end};
+    wind_scenario_path = strcat(s.path, '\');
+    
+    load(strcat(wind_scenario_path, wind_scenario_name, '.mat'));
     
     model = read_text(strcat(mdlcpy_path, model_filename));
     model = strrep(model, '<<TMAX>>', string(time));
     model = strrep(model, '<<DT>>', string(DT));
     write_text(strcat(mdlcpy_path, model_filename), model);
     
-    s = what(strcat('Wind_Scenarios/', wind_scenario_name));
-    wind_path = s.path;
-    
     inflow = read_text(strcat(mdlcpy_path, inflow_filename));
-    inflow = strrep(inflow, '<<WIND>>', strcat(wind_path, '\', turbsim_filenames{n}));
+    inflow = strrep(inflow, '<<WIND>>', strcat(wind_scenario_path, turbsim_filenames{n}));
     write_text(strcat(mdlcpy_path, inflow_filename), inflow);
     
     s = what(mdlcpy_path);
     model_file = strcat(s.path, '\', model_filename);
     
-    lidar_data = readmatrix(strcat(wind_path, '\', lidar_filenames{n}));
+    lidar_data = readmatrix(strcat(wind_scenario_path, lidar_filenames{n}));
     lidar_data = timeseries(lidar_data(:,2), lidar_data(:,1));
     
     simin = Simulink.SimulationInput('Top_Model');
@@ -39,9 +49,18 @@ function [simin] = gen_simin(wind_scenario_name, n, turbine_model_name, ...
     simin = simin.setVariable('zeta', zeta);
     simin = simin.setVariable('FAST_InputFileName', model_file);
     
+    simin = simin.setVariable('CP', CP);
+    simin = simin.setVariable('CP_lambda', CP_lambda);
+    simin = simin.setVariable('CP_theta', CP_theta);
+    [CP_theta_grid, CP_lambda_grid] = meshgrid(CP_theta, CP_lambda);
+    simin = simin.setVariable('CP_lambda_grid', CP_lambda_grid);
+    simin = simin.setVariable('CP_theta_grid', CP_theta_grid);
+    
     %% Set up controller block
     
     simin = simin.setBlockParameter('Top_Model/Controller', 'ModelFile', controller_name);
-    simin = feval(strcat(controller_name, '_init'), simin);
+    simin = feval(strcat(controller_name, '_init'), simin, turbine_model_path);
+    simin = simin.setBlockParameter('Top_Model/Observer', 'ModelFile', observer_name);
+    simin = feval(strcat(observer_name, '_init'), simin, turbine_model_path);
 end
 

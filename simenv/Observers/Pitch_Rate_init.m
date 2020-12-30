@@ -1,7 +1,14 @@
-function [simin_out] = Pitch_Rate_init(simin)
+function [simin_out] = Pitch_Rate_init(simin, turbine_model_path)
+    
+    s = what(turbine_model_path);
+    path_parts = split(s.path, '\');
+    path_parts = path_parts(strlength(path_parts) > 0);
+    turbine_model_name = path_parts{end};
+    turbine_model_path = strcat(s.path, '\');
+    
+    load(strcat(turbine_model_path, turbine_model_name, '.mat'));
+    
     %% Region 3 Pitch Rate Observer
-    omega = 2*pi;
-    zeta = 0.70;
     A_pitch = [0 1; -omega^2 -2*zeta*omega];
     B_pitch = [0; omega^2];
     C_pitch = [1 0];

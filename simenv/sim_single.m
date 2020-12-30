@@ -1,14 +1,16 @@
-function [] = sim_single(sim_name, wind_scenario_name, scenario_n, turbine_model_name, ...
+function [] = sim_single(sim_name, wind_scenario_path, scenario_n, turbine_model_path, ...
     controller_name, observer_name)
 
-    simin = gen_simin(wind_scenario_name, scenario_n, turbine_model_name,...
+    simin = gen_simin(wind_scenario_path, scenario_n, turbine_model_path,...
         controller_name, observer_name);
     
     sim(simin);
     
-    mkdir(strcat('Results/', sim_name));
     
     %{
+    mkdir(strcat('Results/', sim_name));
+    
+
     mdlcpy_path = strcat('simtmp/mdl', string(scenario_n), '/');
     load(strcat(mdlcpy_path, turbine_model_name, '.mat'));
     s = split(model_filename, '.');
