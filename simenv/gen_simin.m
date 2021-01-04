@@ -1,7 +1,7 @@
-function [simin] = gen_simin(wind_scenario_path, n, turbine_model_path, ...
+function [simin, mdlcpy_path] = gen_simin(wind_scenario_path, n, turbine_model_path, ...
     controller_name, observer_name)
     
-    mdlcpy_path = strcat('simtmp\mdl', string(n), '\');
+    mdlcpy_path = strcat(tempname, '\mdl', string(n), '\');
 
     mkdir(mdlcpy_path);
     
