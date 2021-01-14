@@ -20,8 +20,10 @@ function [simin_out] = BLCTRL_init(simin, turbine_model_path)
     M_1 = K_T * Omega_1^2;
     M_2 = 1e-6 * P_rated / Omega_rated;
 
-    K_I = 0.1;
-    K_P = 0.3;
+    %K_I = 0.1;
+    K_I = 0.008068634 * 180 / pi;
+    %K_P = 0.3;
+    K_P = 0.01882681 * 180 / pi;
     
     KK = 0.284;
     
