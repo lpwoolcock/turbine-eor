@@ -1,4 +1,4 @@
-function [] = sim_multi(sim_name, wind_scenario_path,... 
+function [] = sim_multi(sim_name, wind_scenario_path, wind_type,... 
     turbine_model_path, controller_name, observer_name)
     
     s = what(wind_scenario_path);
@@ -12,8 +12,8 @@ function [] = sim_multi(sim_name, wind_scenario_path,...
     N = length(windspeeds);
     
     for k=1:N
-        [simIn(k), model_path(k)] = gen_simin(wind_scenario_path, k, ...
-            turbine_model_path, controller_name, observer_name);
+        [simIn(k), model_path(k)] = gen_simin(wind_scenario_path, wind_type,...
+            k, turbine_model_path, controller_name, observer_name);
     end
     
     simOut = parsim(simIn);

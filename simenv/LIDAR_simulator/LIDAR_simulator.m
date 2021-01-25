@@ -1,6 +1,6 @@
 function [] = LIDAR_simulator(turbsim_input, csv_output, time, t_s, N)
     LIDAR_focal_distance = 60;      %focal distance of the LIDAR
-    grid_width = 65;                %simulation width for FAST
+    grid_width = 130;                %simulation width for FAST
     t=0:t_s:time; 
 
     [velocity, twrVelocity, y, z, zTwr, nz, ny, dz, dy, dt, zHub, z1,mffws] = readTSgrid(turbsim_input);

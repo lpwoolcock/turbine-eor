@@ -14,7 +14,7 @@ function [DELs] = calc_DELs(results_path, moment_names, wohler_exponents, t_star
     
     for k = 1:N
         data_struct = load(strcat(results_path, results_filenames(k)));
-        DT = data_struct.Time(2) - data_struct.Time(1);
+        DT = data_struct.Time(end)/length(data_struct.Time);
         j_start = ceil(t_start / DT);
         T = data_struct.Time(end) - data_struct.Time(j_start);
         

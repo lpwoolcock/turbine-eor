@@ -41,7 +41,15 @@ function [] = gen_wind_scenario(path, turbsim_template_filename, windspeeds, tim
         fprintf('[%s] [%d/%d] Generated LIDAR data file "%s"\n', string(datetime), k, K, lidar_filenames{k});
     end
     
+    uniform_filenames = cell(K,1);
+    parfor k = 1:K
+        uniform_filenames{k} = sprintf('%s_uniform_%d.csv', name, k);
+        REWS_simulator(strcat(path, turbsim_filenames{k}, '.bts'), strcat(path, uniform_filenames{k}), 63); %hmm
+        
+        fprintf('[%s] [%d/%d] Generated uniform inflow file "%s"\n', string(datetime), k, K, uniform_filenames{k});
+    end
+    
     turbsim_filenames = strcat(turbsim_filenames, '.bts');
-    save(strcat(path, name, '.mat'), 'turbsim_filenames', 'lidar_filenames', 'windspeeds', 'time', 't_s_lidar');
+    save(strcat(path, name, '.mat'), 'turbsim_filenames', 'lidar_filenames', 'uniform_filenames', 'windspeeds', 'time', 't_s_lidar');
     fprintf('[%s] Wind scenario generation for "%s" complete.\n', string(datetime), name);
 end

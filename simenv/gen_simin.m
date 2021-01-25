@@ -1,4 +1,4 @@
-function [simin, mdlcpy_path] = gen_simin(wind_scenario_path, n, turbine_model_path, ...
+function [simin, mdlcpy_path] = gen_simin(wind_scenario_path, wind_type, n, turbine_model_path, ...
     controller_name, observer_name)
     
     mdlcpy_path = strcat(tempname, '\mdl', string(n), '\');
@@ -30,7 +30,17 @@ function [simin, mdlcpy_path] = gen_simin(wind_scenario_path, n, turbine_model_p
     write_text(strcat(mdlcpy_path, model_filename), model);
     
     inflow = read_text(strcat(mdlcpy_path, inflow_filename));
-    inflow = strrep(inflow, '<<WIND>>', strcat(wind_scenario_path, turbsim_filenames{n}));
+    
+    if strcmp(wind_type, 'uniform')
+        inflow = strrep(inflow, '<<WIND>>', strcat(wind_scenario_path, uniform_filenames{n}));
+        inflow = strrep(inflow, '<<TYPE>>', '2');
+    elseif strcmp(wind_type, 'fullfield')
+        inflow = strrep(inflow, '<<WIND>>', strcat(wind_scenario_path, turbsim_filenames{n}));
+        inflow = strrep(inflow, '<<TYPE>>', '3');
+    else
+        error('Invalid wind type');
+    end
+
     write_text(strcat(mdlcpy_path, inflow_filename), inflow);
     
     s = what(mdlcpy_path);

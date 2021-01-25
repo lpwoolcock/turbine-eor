@@ -61,9 +61,11 @@ function [simin_out] = EOR_init(simin, turbine_model_path)
     simin_out = simin_out.setVariable('EOR_pitch_Dew', [-1 0 0]);
     simin_out = simin_out.setVariable('EOR_pitch_F', [0 0]);
     
-    simin_out = simin_out.setVariable('EOR_torque_LQR_R', 100);
+    simin_out = simin_out.setVariable('EOR_torque_LQR_R', 10);
     
-    simin_out = simin_out.setVariable('EOR_filt_tau', 1);
+    %simin_out = simin_out.setVariable('EOR_filt_tau', 0.5);
+    simin_out = simin_out.setVariable('EOR_filt_b', [0 0.5699 0 86.6992]);
+    simin_out = simin_out.setVariable('EOR_filt_a', [1.0 8.6787 37.4972 86.6992]);
     
     simin_out = simin_out.setVariable('EOR_pitch_thresh', 1 * pi / 180);
     simin_out = simin_out.setVariable('EOR_torque', M_rated);
