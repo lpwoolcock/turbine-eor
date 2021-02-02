@@ -1,5 +1,5 @@
 
-function [Vh, delta, Vz] = REWS(velocity, y, z, zHub, radius) 
+function [Vh, delta, Vz] = REWS(velocity, y, z, dt, zHub, mffws, grid_width, radius) 
 
     % velocity is a 4D array with dimensions in time, (U, V, W components), y,
     % z positions. 
@@ -28,23 +28,24 @@ function [Vh, delta, Vz] = REWS(velocity, y, z, zHub, radius)
         
         rews_idx(i,:) = [y_idx, z_idx];
     end
-
-    N = size(velocity, 1);
+    
+    j_offset = ceil((grid_width/mffws)/dt);
+    N = size(velocity, 1) - (j_offset - 1);
     M = size(rews_idx, 1);
     
     delta = zeros(N, 1);
     Vh = zeros(N, 1);
     Vz = zeros(N, 1);
     
-    for j = 1:N
+    for j = j_offset:N
         vel = zeros(3,1);
         for k = 1:M
             vel = vel + (1/M) * velocity(j, :, rews_idx(k, 1), rews_idx(k, 2)).';
         end
         
-        delta(j) = (180/pi) * atan(vel(2) / vel(1));
-        Vh(j) = sqrt(vel(1)^2 + vel(2)^2);
-        Vz(j) = vel(3);
+        delta(j - (j_offset-1)) = (180/pi) * atan(vel(2) / vel(1));
+        Vh(j - (j_offset-1)) = sqrt(vel(1)^2 + vel(2)^2);
+        Vz(j - (j_offset-1)) = vel(3);
     end
 
 end

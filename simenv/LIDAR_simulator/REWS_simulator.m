@@ -2,8 +2,8 @@ function [] = REWS_simulator(turbsim_input, csv_output, R)
 
 
     [velocity, twrVelocity, y, z, zTwr, nz, ny, dz, dy, dt, zHub, z1,mffws] = readTSgrid(turbsim_input);
-    [Vh, delta, Vz] = REWS(velocity, y, z, zHub, R);
-    t = dt * (0:(size(velocity, 1)-1)).';
+    [Vh, delta, Vz] = REWS(velocity, y, z, dt, zHub, mffws, 130, R);
+    t = dt * (0:(size(Vh, 1)-1)).';
     
     HLinShr = zeros(length(t), 1);
     VShr = repmat(0.14, [length(t) 1]); % assuming IECKAI/IECVKM with NTM

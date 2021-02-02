@@ -10,7 +10,7 @@ function [] = LIDAR_simulator(turbsim_input, csv_output, time, t_s, N)
     end
     
     % Now filter the scanned measurements
-    Bw = 87/(LIDAR_focal_distance^2); % cut off frequency in m^-1
+    Bw = 0.25 * mffws*87/(LIDAR_focal_distance^2); % cut off frequency in m^-1
     omega_c = 2*pi*Bw;%*mffws % cut off frequency in rad/s
     wc = omega_c*t_s; % cut off freq in rad/sample, should be multiplied by ts ...
 
