@@ -1,4 +1,4 @@
-function [omega_r_std] = calc_omega_r_std(results_path, t_start)
+function [omega_r_std] = calc_omega_r_std(results_path, t_start, t_end)
     %calc_DELs('Results\BL5MW_1min', ["TwrBsMyt" "TwrBsMxt" "RootMyb1" "RootMxb1" "RotTorq"], [4 4 10 10 4], 2)    
 
     s = what(results_path);
@@ -17,8 +17,14 @@ function [omega_r_std] = calc_omega_r_std(results_path, t_start)
         DT = data_struct.Time(end)/length(data_struct.Time);
         j_start = ceil(t_start / DT);
         
+        if nargin < 3
+            j_end = length(Time);
+        else
+            j_end = ceil(t_end / DT);
+        end
+        
         % from rpm to rad/s
-        omega_r = data_struct.RotSpeed(j_start:end) * pi / 30;
+        omega_r = data_struct.RotSpeed(j_start:j_end) * pi / 30;
     
         omega_r_std(k) = std(omega_r);
         

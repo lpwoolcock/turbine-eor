@@ -51,6 +51,7 @@ function [simin, mdlcpy_path] = gen_simin(wind_scenario_path, wind_type, n, turb
     
     simin = Simulink.SimulationInput('Top_Model');
     simin = simin.setVariable('lidar_data', lidar_data);
+    simin = simin.setVariable('windspeed', windspeeds(n));
     simin = simin.setVariable('TMax', time);
     simin = simin.setVariable('DT', DT);
     
@@ -60,6 +61,7 @@ function [simin, mdlcpy_path] = gen_simin(wind_scenario_path, wind_type, n, turb
     simin = simin.setVariable('R', R);
     simin = simin.setVariable('rho', rho);
     simin = simin.setVariable('Omega_rated', Omega_rated);
+    simin = simin.setVariable('M_rated', 1e-6 * P_rated / Omega_rated);
     
     simin = simin.setVariable('C_d', C_d);
     simin = simin.setVariable('K_d', K_d);

@@ -42,6 +42,7 @@ function [simin_out] = Simple_Kalman_init(simin, turbine_model_path)
     simin_out = simin_out.setVariable('SK_R', 63);
     simin_out = simin_out.setVariable('SK_lambda_0', lambda_star);
     simin_out = simin_out.setVariable('SK_T', 0.1);
+    simin_out = simin_out.setVariable('SK_theta_tau', 3.7);
     simin_out = Pitch_Rate_init(simin_out, turbine_model_path);
 end
 
