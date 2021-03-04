@@ -1,5 +1,5 @@
 
-Predictions were generated on 22-Sep-2020 at 13:20:41 using FAST (v8.16.00a-bjj, 27-Jul-2016), compiled as a DLL S-Function for Simulink as a 64-bit application using single precision
+Predictions were generated on 13-Jan-2021 at 16:58:36 using FAST (v8.16.00a-bjj, 27-Jul-2016), compiled as a DLL S-Function for Simulink as a 64-bit application using single precision
  linked with  NWTC Subroutine Library (v2.09.00, 23-Jul-2016); ElastoDyn (v1.04.00a-bjj, 26-Jul-2016); InflowWind (v3.03.00, 26-Jul-2016); AeroDyn (v15.03.00, 27-Jul-2016); ServoDyn (v1.06.00a-bjj, 26-Jul-2016)
 
 Description from the FAST input file: FAST Certification Test #18: NREL 5.0 MW Baseline Wind Turbine (Onshore)
