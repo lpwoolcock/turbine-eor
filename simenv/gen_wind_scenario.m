@@ -26,7 +26,7 @@ function [] = gen_wind_scenario(path, turbsim_template_filename, windspeeds, tim
     
     parfor k = 1:K
         command = sprintf('@bin\\TurbSim64.exe %s', strcat(path, turbsim_filenames{k}, '.inp'));
-        [~,~] = system(command);
+        %[~,~] = system(command);
         delete(strcat(path, turbsim_filenames{k}, '.inp'));
         delete(strcat(path, turbsim_filenames{k}, '.sum'));
         
@@ -36,7 +36,7 @@ function [] = gen_wind_scenario(path, turbsim_template_filename, windspeeds, tim
     lidar_filenames = cell(K,1);
     parfor k = 1:K
         lidar_filenames{k} = sprintf('%s_lidar_%d.csv', name, k);
-        LIDAR_simulator(strcat(path, turbsim_filenames{k}, '.bts'), strcat(path, lidar_filenames{k}), time + t_fudge, t_s_lidar, N_lidar);
+        LIDAR_simulator_updated(strcat(path, turbsim_filenames{k}, '.bts'), strcat(path, lidar_filenames{k}), time + t_fudge, t_s_lidar, N_lidar);
         
         fprintf('[%s] [%d/%d] Generated LIDAR data file "%s"\n', string(datetime), k, K, lidar_filenames{k});
     end
